@@ -8,21 +8,16 @@ PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
 ################################
-# utiliser "brower()" dans le code
+# utiliser "browser()" dans le code
 # puis "devtools::test()" ou "devtools::test_file(…)" dans la console!
 
-.fit_output <- function(random_hlme) {
-  return(list("model" = random_hlme, "pred_rand" = random_hlme$pred["pred_ss"]))
-}
-
-initiate_hlme_first_iteration <- function(random,
-                                     data,
-                                     pred_fixed,
-                                     subject,
-                                     var.time,
-                                     idiag = FALSE,
-                                     cor = NULL,
-                                     maxiter = 50) {
+initiate_random_hlme <- function(random,
+                                 data,
+                                 subject,
+                                 var.time,
+                                 idiag = FALSE,
+                                 cor = NULL,
+                                 maxiter) {
   # preparing the hlme formula inputs
   if (length(random) != 3) {
     stop("A left side must be defined for 'random' formula")
@@ -32,59 +27,43 @@ initiate_hlme_first_iteration <- function(random,
   fixed_ <- as.formula(paste0(left, "~1"))
   random_ <- as.formula(paste0("~", right))
 
-  # !!! offsetting is not implemented in LCMM
-  # BUT for linear models, fitting "f(X)+offset" on Y is equivalent to fitting f(X) on "Y-offset"
-  # so that is the method used so far
-  # random_ <- update(random_, ~ . + offset(pred_fixed))
-  # data[[,PRED_FIXED]] <- pred_fixed
-  data[left] <- data[left] - pred_fixed
-
-  # empty run (maxiter = 0) to get B_init
-  # except for intercept which is fixed at 0
+  # empty run (maxiter = 0) to initialize the model
+  # the eval is used to handle the transfer of parameters to hlme
   command <- substitute(
     hlme(
       fixed = fixed_,
       random = random_,
+      data = data,
       cor = cor,
       idiag = idiag,
-      data = data,
       subject = subject,
       var.time = var.time,
-      maxiter = 0
-    ),
-    env = as.list(environment())
-  ) # used to debug the command, we could just run eval directly
-  init_hlme <- eval(command)
-  B_init <- c(0, init_hlme$best[-1])
-
-  command <- substitute(
-    hlme(
-      fixed = fixed_,
-      random = random_,
-      cor = cor,
-      # AR(temps) ou BM(temps)
-      idiag = idiag,
-      data = data,
-      subject = subject,
-      var.time = var.time,
-      B = B_init,
+      maxiter = 0,
       posfix = c(1),
-      maxiter = maxiter
     ),
     env = as.list(environment())
   ) # used to debug the command, we could just run eval directly
   random_hlme <- eval(command)
-  return(.fit_output(random_hlme))
+  random_hlme$best["intercept"] <- 0.
+  if (missing(maxiter)) {
+    random_hlme$call$maxiter <- NULL
+  } else {
+    random_hlme$call$maxiter <- maxiter
+  }
+  return(random_hlme)
 }
 
-fit_hlme_next_iteration <- function(random_hlme, data, pred_fixed) {
-  # browser()
+fit_random_hlme <- function(random_hlme, data, pred_fixed) {
   left <- deparse(random_hlme$call$fixed[[2]])
+  # !!! offsetting is not implemented in LCMM
+  # BUT for linear models, fitting "f(X)+offset" on Y is equivalent to fitting f(X) on "Y-offset"
+  # so that is the method used so far
   data[left] <- data[left] - pred_fixed
   random_hlme <- update(random_hlme, data = data, B = random_hlme$best)
-  # command <- substitute(update(random_hlme, data = data, B = NULL))
-  # random_hlme <- eval(command)
-  return(.fit_output(random_hlme))
+  if (random_hlme$best["intercept"] <- 0.) {
+    stop("This model should have a 0 fixed intercept.")
+  }
+  return(list("model" = random_hlme, "pred_rand" = random_hlme$pred["pred_ss"]))
 }
 
 forecast_hlme <- function(random_hlme, data, pred_fixed) {
