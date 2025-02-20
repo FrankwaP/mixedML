@@ -11,7 +11,7 @@ PRED_RAND <- "__PRED_RAND"
 # utiliser "browser()" dans le code
 # puis "devtools::test()" ou "devtools::test_file(…)" dans la console!
 
-initiate_random_hlme <- function(random,
+initiate_random_hlme <- function(full_random,
                                  data,
                                  subject,
                                  var.time,
@@ -19,31 +19,26 @@ initiate_random_hlme <- function(random,
                                  cor = NULL,
                                  maxiter) {
   # preparing the hlme formula inputs
-  if (length(random) != 3) {
+  if (length(full_random) != 3) {
     stop("A left side must be defined for 'random' formula")
   }
-  left <- .get_left_side_string(random)
-  right <- .get_right_side_string(random)
+  left <- .get_left_side_string(full_random)
+  right <- .get_right_side_string(full_random)
   fixed_ <- as.formula(paste0(left, "~1"))
   random_ <- as.formula(paste0("~", right))
 
   # empty run (maxiter = 0) to initialize the model
-  # the eval is used to handle the transfer of parameters to hlme
-  command <- substitute(
-    hlme(
-      fixed = fixed_,
-      random = random_,
-      data = data,
-      cor = cor,
-      idiag = idiag,
-      subject = subject,
-      var.time = var.time,
-      maxiter = 0,
-      posfix = c(1),
-    ),
-    env = as.list(environment())
-  ) # used to debug the command, we could just run eval directly
-  random_hlme <- eval(command)
+  random_hlme <-  eval(substitute(hlme(
+    fixed = fixed_,
+    random = random_,
+    data = data,
+    cor = cor,
+    idiag = idiag,
+    subject = subject,
+    var.time = var.time,
+    maxiter = 0,
+    posfix = c(1),
+  )))  # trick to substitute cor=cor by its value
   random_hlme$best["intercept"] <- 0.
   if (missing(maxiter)) {
     random_hlme$call$maxiter <- NULL
@@ -54,19 +49,23 @@ initiate_random_hlme <- function(random,
 }
 
 fit_random_hlme <- function(random_hlme, data, pred_fixed) {
-  left <- deparse(random_hlme$call$fixed[[2]])
+  stopifnot(class(random_hlme) == "hlme")
+  stopifnot(random_hlme$best["intercept"] == 0.)
+  stopifnot(class(data) == "data.frame")
+  stopifnot(class(pred_fixed) == "numeric")
   # !!! offsetting is not implemented in LCMM
   # BUT for linear models, fitting "f(X)+offset" on Y is equivalent to fitting f(X) on "Y-offset"
   # so that is the method used so far
+  left <- .get_left_side_string(random_hlme$call$fixed)
   data[left] <- data[left] - pred_fixed
   random_hlme <- update(random_hlme, data = data, B = random_hlme$best)
-  if (random_hlme$best["intercept"] <- 0.) {
-    stop("This model should have a 0 fixed intercept.")
-  }
+  stopifnot(random_hlme$best["intercept"] == 0.)
   return(list("model" = random_hlme, "pred_rand" = random_hlme$pred["pred_ss"]))
 }
 
 forecast_hlme <- function(random_hlme, data, pred_fixed) {
+  stopifnot(class(random_hlme) == "hlme")
+  stopifnot(class(pred_fixed) == "numeric")
   var.time <- random_hlme$var.time
   subject <- colnames(random_hlme$pred)[1]
 
