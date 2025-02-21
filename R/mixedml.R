@@ -1,36 +1,12 @@
-# devtools::install_github(repo = "reservoirpy/reservoirR")
-# library(tidymodels)
-# library(recipes)
-# usethis::use_test("mixedml")
-set.seed(666)
-
-####################################
-## test of do.call (it works!)
-# sub_test <- function(b, a) {
-#   print('COUCOU!')
-#   print(a)
-#   print(b)
-# }
-#
-# test <- function(list_sub_test_args) {
-#   do.call(sub_test, list_sub_test_args)
-# }
-#
-#
-# test(list(a=2, b=10))
-####################################
-
-
 # https://github.com/reservoirpy/reservoirR/blob/main/tests/testthat/tests.R
-
-
-.check_args <- function(spec,
-                        data,
-                        subject,
-                        time,
-                        conv_ratio_thresh,
-                        patience,
-                        list_hlme_args) {
+.check_reservoir_mixedml_args <- function(spec,
+                                          data,
+                                          subject,
+                                          time,
+                                          conv_ratio_thresh,
+                                          patience,
+                                          list_hlme_args,
+                                          list_reservoir_args) {
   stopifnot(rlang::is_bare_formula(spec))
   stopifnot(is.data.frame(data))
   stopifnot(is.character(subject))
@@ -41,10 +17,11 @@ set.seed(666)
   stopifnot(0 <= conv_ratio_thresh & conv_ratio_thresh < 1)
   stopifnot(is.numeric(patience))
   stopifnot(0 <= patience)
+  stopifnot(is.list(list_hlme_args))
+  stopifnot(is.list(list_reservoir_args))
 }
 
-.check_list_hlme_args <- function(list_hlme_args, spec, data, subject, time) {
-  stopifnot(is.list(list_hlme_args))
+.prepare_list_hlme_args <- function(list_hlme_args, spec, data, subject, time) {
   params <- names(list_hlme_args)
   stopifnot(!is.null(params))
   avoid <- c("fixed", "random", "data", "subject", "var.time")
@@ -65,33 +42,44 @@ set.seed(666)
   return(list_hlme_args)
 }
 
-mixedml <- function(spec,
-                    data,
-                    subject,
-                    time,
-                    conv_ratio_thresh,
-                    patience,
-                    list_hlme_args) {
-  .check_args(spec,
-              data,
-              subject,
-              time,
-              conv_ratio_thresh,
-              patience,
-              list_hlme_args)
-  list_hlme_args <- .check_list_hlme_args(list_hlme_args, spec, data, subject, time)
-  #
-  left <- .get_left_side_string(spec)
-  random_hlme <- do.call(initiate_random_hlme, list_hlme_args)
-  fixed_model <- initiate_reservoirR(
+.prepare_list_reservoir_args <- function(list_reservoir_args,
+                                         spec,
+                                         data,
+                                         subject,
+                                         time) {
+  list_reservoir_args$spec <- spec
+  list_reservoir_args$data <- data
+  list_reservoir_args$subject <- subject
+  # list_reservoir_args$time <- time
+  return(list_reservoir_args)
+}
+
+reservoir_mixedml <- function(spec,
+                              data,
+                              subject,
+                              time,
+                              conv_ratio_thresh,
+                              patience,
+                              list_hlme_args,
+                              list_reservoir_args) {
+  .check_reservoir_mixedml_args(
     spec,
     data,
     subject,
-    units = 20,
-    lr = 0.1,
-    sr = 1.3,
-    ridge = 1e-3
+    time,
+    conv_ratio_thresh,
+    patience,
+    list_hlme_args,
+    list_reservoir_args
   )
+  list_hlme_args <- .prepare_list_hlme_args(list_hlme_args, spec, data, subject, time)
+  list_reservoir_args <- .prepare_list_reservoir_args(list_reservoir_args, spec, data, subject, time)
+
+  #
+  left <- .get_left_side_string(spec)
+  random_hlme <- do.call(initiate_random_hlme, list_hlme_args)
+  fixed_model <- do.call(initiate_reservoirR, list_reservoir_args)
+
   ########
   data_fixed <- data
   pred_rand <- rep(0, nrow(data))

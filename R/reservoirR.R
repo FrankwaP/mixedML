@@ -4,14 +4,18 @@ rpy <- import("reservoirpy")
 invisible(rpy$verbosity(0))  # no need to be too verbose here
 
 
+.test_initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
+  stopifnot(rlang::is_bare_formula(spec))
+  stopifnot(is.data.frame(data))
+  stopifnot(is.character(subject))
+  stopifnot(is.numeric(units))
+  stopifnot(is.numeric(lr))
+  stopifnot(is.numeric(sr))
+  stopifnot(is.numeric(ridge))
+}
+
 initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
-  stopifnot(class(spec) == "formula")
-  stopifnot(class(data) == "data.frame")
-  stopifnot(class(subject) == "character")
-  stopifnot(class(units) == "numeric")
-  stopifnot(class(lr) == "numeric")
-  stopifnot(class(sr) == "numeric")
-  stopifnot(class(ridge) == "numeric")
+  .test_initiate_reservoirR(spec, data, subject, units, lr, sr, ridge)
 
   reservoir <- reservoirnet::createNode("Reservoir",
                                         units = units,
@@ -19,11 +23,21 @@ initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
                                         sr = sr)
   readout <- reservoirnet::createNode("Ridge", ridge = ridge)
   model <- reservoirnet::link(reservoir, readout)
-  # .GlobalEnv$model <- model
   return(model)
 }
 
+.test_fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
+  # stopifnot(!inherits(model, ????)
+  stopifnot(rlang::is_bare_formula(spec))
+  stopifnot(is.data.frame(data))
+  stopifnot(is.character(subject))
+  stopifnot(is.numeric(pred_rand))
+  stopifnot(is.vector(pred_rand))
+}
+
+
 fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
+  .test_fit_reservoirR(model, spec, data, subject, pred_rand)
   # !!! offsetting is not implemented in LCMM
   # BUT for linear models, fitting "f(X)+offset" on Y is equivalent to fitting f(X) on "Y-offset"
   # so that is the method used so far
