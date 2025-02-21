@@ -13,13 +13,11 @@ test_that("hlme_full_use", {
   expect_s3_class(model, "hlme")
   #########
   k <- 0.5
-  results0 <- fit_random_hlme(
-    random_hlme = model,
-    data = data,
-    pred_fixed = k * data[["Y"]]
-  )
+  results0 <- fit_random_hlme(random_hlme = model,
+                              data = data,
+                              pred_fixed = k * data[["Y"]])
   expect_type(results0, "list")
-  expect_named(results0, c("model","pred_rand"))
+  expect_named(results0, c("model", "pred_rand"))
   expect_s3_class(results0$model, "hlme")
   expect_vector(results0$pred_rand)
   #########

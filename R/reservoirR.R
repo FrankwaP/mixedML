@@ -14,10 +14,9 @@ initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
   stopifnot(class(ridge) == "numeric")
 
   reservoir <- reservoirnet::createNode("Reservoir",
-    units = units,
-    lr = lr,
-    sr = sr
-  )
+                                        units = units,
+                                        lr = lr,
+                                        sr = sr)
   readout <- reservoirnet::createNode("Ridge", ridge = ridge)
   model <- reservoirnet::link(reservoir, readout)
   # .GlobalEnv$model <- model
@@ -39,11 +38,9 @@ fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
     warmup = 0
   )
   model <- model_fit$fit
-  pred_fixed <- reservoirnet::predict_seq(
-    node = model,
-    X = train_data[["X"]],
-    stateful = FALSE
-  )
+  pred_fixed <- reservoirnet::predict_seq(node = model,
+                                          X = train_data[["X"]],
+                                          stateful = FALSE)
   pred_fixed <- .reshape_pred_of_rnn(pred_fixed, data, subject)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }

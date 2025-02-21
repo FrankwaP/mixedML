@@ -16,4 +16,3 @@ test_that("mixedml works", {
   )
   expect_named(output, c("fixed_model", "random_model", "mse_list"))
 })
-

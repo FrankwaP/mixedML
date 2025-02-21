@@ -24,7 +24,13 @@ set.seed(666)
 # https://github.com/reservoirpy/reservoirR/blob/main/tests/testthat/tests.R
 
 
-.check_args <- function(spec, data, subject, time, conv_ratio_thresh, patience, list_hlme_args) {
+.check_args <- function(spec,
+                        data,
+                        subject,
+                        time,
+                        conv_ratio_thresh,
+                        patience,
+                        list_hlme_args) {
   stopifnot(rlang::is_bare_formula(spec))
   stopifnot(is.data.frame(data))
   stopifnot(is.character(subject))
@@ -44,7 +50,13 @@ set.seed(666)
   avoid <- c("fixed", "random", "data", "subject", "var.time")
   inter <- intersect(avoid, params)
   if (length(inter) > 0) {
-    warning(paste0("Parameter ", inter, " of list_hlme_args are already defined for mixedml and will be ignored.\n"))
+    warning(
+      paste0(
+        "Parameter ",
+        inter,
+        " of list_hlme_args are already defined for mixedml and will be ignored.\n"
+      )
+    )
   }
   list_hlme_args$full_random <- spec
   list_hlme_args$data <- data
@@ -53,13 +65,33 @@ set.seed(666)
   return(list_hlme_args)
 }
 
-mixedml <- function(spec, data, subject, time, conv_ratio_thresh, patience, list_hlme_args) {
-  .check_args(spec, data, subject, time, conv_ratio_thresh, patience, list_hlme_args)
+mixedml <- function(spec,
+                    data,
+                    subject,
+                    time,
+                    conv_ratio_thresh,
+                    patience,
+                    list_hlme_args) {
+  .check_args(spec,
+              data,
+              subject,
+              time,
+              conv_ratio_thresh,
+              patience,
+              list_hlme_args)
   list_hlme_args <- .check_list_hlme_args(list_hlme_args, spec, data, subject, time)
   #
   left <- .get_left_side_string(spec)
   random_hlme <- do.call(initiate_random_hlme, list_hlme_args)
-  fixed_model <- initiate_reservoirR(spec, data, subject, units = 20, lr = 0.1, sr = 1.3, ridge = 1e-3)
+  fixed_model <- initiate_reservoirR(
+    spec,
+    data,
+    subject,
+    units = 20,
+    lr = 0.1,
+    sr = 1.3,
+    ridge = 1e-3
+  )
   ########
   data_fixed <- data
   pred_rand <- rep(0, nrow(data))
@@ -76,7 +108,7 @@ mixedml <- function(spec, data, subject, time, conv_ratio_thresh, patience, list
     random_hlme <- random_results$model
     pred_rand <- random_results$pred_rand
     #
-    mse <- mean((pred_fixed + pred_rand - data[[left]])**2)
+    mse <- mean((pred_fixed + pred_rand - data[[left]]) ** 2)
     mse_list <- c(mse_list, mse)
 
     if (mse < (1 - conv_ratio_thresh) * mse_min) {
@@ -92,5 +124,11 @@ mixedml <- function(spec, data, subject, time, conv_ratio_thresh, patience, list
       mse_min <- mse
     }
   }
-  return(list("fixed_model" = fixed_model, "random_model" = random_hlme, "mse_list" = mse_list))
+  return(
+    list(
+      "fixed_model" = fixed_model,
+      "random_model" = random_hlme,
+      "mse_list" = mse_list
+    )
+  )
 }
