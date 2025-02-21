@@ -1,10 +1,19 @@
-spec_formula <- Y ~ X1 + X2 + X3
+spec_formula <- y_mixed ~ x1 + x2 + x3
+
+to_scale <- c('x1', 'x2', 'x3')
+data <- data_mixedml
+data[, to_scale] <- scale(data[, to_scale])
 
 test_that("mixedml works", {
-  mixedml(
+  output <- mixedml(
     spec = spec_formula,
-    data = data_hlme,
-    conv_thresh = 0.01,
-    list_hlme_args = list(subject = "ID", var.time = "Time")
+    data = data,
+    subject = 'subject',
+    time = 'time',
+    conv_ratio_thresh = 0.01,
+    patience = 1,
+    list_hlme_args = list(subject = "willraiseawarning", var.time = "willraiseawarning")
   )
+  expect_named(output, c("fixed_model", "random_model", "mse_list"))
 })
+

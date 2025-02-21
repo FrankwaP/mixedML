@@ -4,7 +4,6 @@ to_scale <- c("X1", "X2", "X3")
 data <- data_hlme
 data[, to_scale] <- scale(data[, to_scale])
 
-
 test_that("reservoir works", {
   model <- initiate_reservoirR(
     spec_formula,

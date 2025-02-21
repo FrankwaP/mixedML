@@ -1,5 +1,8 @@
 # usethis::use_test("reservoirs")
-# library(reticulate)
+library(reticulate)
+rpy <- import("reservoirpy")
+invisible(rpy$verbosity(0))  # no need to be too verbose here
+
 
 initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
   stopifnot(class(spec) == "formula")
@@ -28,20 +31,19 @@ fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
   left <- .get_left_side_string(spec)
   data[left] <- data[left] - pred_rand
   train_data <- .reshape_for_rnn(spec, data, subject)
-  model <- reservoirnet::reservoirR_fit(
+  model_fit <- reservoirnet::reservoirR_fit(
     model,
     X = train_data[["X"]],
     Y = train_data[["Y"]],
     stateful = FALSE,
     warmup = 0
   )
-  # browser()
+  model <- model_fit$fit
   pred_fixed <- reservoirnet::predict_seq(
-    node = model$fit,
+    node = model,
     X = train_data[["X"]],
     stateful = FALSE
   )
-  # browser()
   pred_fixed <- .reshape_pred_of_rnn(pred_fixed, data, subject)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }
