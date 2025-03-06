@@ -4,6 +4,7 @@ test_that("hlme_full_use", {
   ##########
   model <- initiate_random_hlme(
     random_spec = Y ~ X1 + X2 + X3,
+    cor = NULL,
     data = data,
     subject = "ID",
     var.time = "Time",
@@ -37,7 +38,7 @@ test_that("hlme_full_use", {
   )
   ##########
   k <- 0.5
-  results3 <- forecast_hlme(
+  results3 <- predict_hlme(
     random_hlme = results0$model,
     data = data,
     pred_fixed = k * data[["Y"]]

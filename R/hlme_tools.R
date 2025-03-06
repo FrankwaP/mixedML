@@ -83,7 +83,7 @@ fit_random_hlme <- function(random_hlme, data, pred_fixed) {
   ))
 }
 
-forecast_hlme <- function(random_hlme, data, pred_fixed) {
+predict_hlme <- function(random_hlme, data, pred_fixed) {
   stopifnot(class(random_hlme) == "hlme")
   stopifnot(class(pred_fixed) == "numeric")
   var.time <- random_hlme$var.time
