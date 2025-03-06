@@ -1,11 +1,19 @@
 # usethis::use_test("reservoirs")
 library(reticulate)
 rpy <- import("reservoirpy")
-invisible(rpy$verbosity(0))  # no need to be too verbose here
+invisible(rpy$verbosity(0)) # no need to be too verbose here
 
 
-.test_initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
-  stopifnot(rlang::is_bare_formula(spec))
+.test_initiate_reservoirR <- function(
+  fixed_spec,
+  data,
+  subject,
+  units,
+  lr,
+  sr,
+  ridge
+) {
+  stopifnot(rlang::is_bare_formula(fixed_spec))
   stopifnot(is.data.frame(data))
   stopifnot(is.character(subject))
   stopifnot(is.numeric(units))
@@ -14,21 +22,31 @@ invisible(rpy$verbosity(0))  # no need to be too verbose here
   stopifnot(is.numeric(ridge))
 }
 
-initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
-  .test_initiate_reservoirR(spec, data, subject, units, lr, sr, ridge)
+initiate_reservoirR <- function(
+  fixed_spec,
+  data,
+  subject,
+  units,
+  lr,
+  sr,
+  ridge
+) {
+  .test_initiate_reservoirR(fixed_spec, data, subject, units, lr, sr, ridge)
 
-  reservoir <- reservoirnet::createNode("Reservoir",
-                                        units = units,
-                                        lr = lr,
-                                        sr = sr)
+  reservoir <- reservoirnet::createNode(
+    "Reservoir",
+    units = units,
+    lr = lr,
+    sr = sr
+  )
   readout <- reservoirnet::createNode("Ridge", ridge = ridge)
   model <- reservoirnet::link(reservoir, readout)
   return(model)
 }
 
-.test_fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
+.test_fit_reservoirR <- function(model, fixed_spec, data, subject, pred_rand) {
   # stopifnot(!inherits(model, ????)
-  stopifnot(rlang::is_bare_formula(spec))
+  stopifnot(rlang::is_bare_formula(fixed_spec))
   stopifnot(is.data.frame(data))
   stopifnot(is.character(subject))
   stopifnot(is.numeric(pred_rand))
@@ -36,14 +54,14 @@ initiate_reservoirR <- function(spec, data, subject, units, lr, sr, ridge) {
 }
 
 
-fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
-  .test_fit_reservoirR(model, spec, data, subject, pred_rand)
+fit_reservoirR <- function(model, fixed_spec, data, subject, pred_rand) {
+  .test_fit_reservoirR(model, fixed_spec, data, subject, pred_rand)
   # !!! offsetting is not implemented in LCMM
   # BUT for linear models, fitting "f(X)+offset" on Y is equivalent to fitting f(X) on "Y-offset"
   # so that is the method used so far
-  left <- .get_left_side_string(spec)
+  left <- .get_left_side_string(fixed_spec)
   data[left] <- data[left] - pred_rand
-  train_data <- .reshape_for_rnn(spec, data, subject)
+  train_data <- .reshape_for_rnn(fixed_spec, data, subject)
   model_fit <- reservoirnet::reservoirR_fit(
     model,
     X = train_data[["X"]],
@@ -52,9 +70,11 @@ fit_reservoirR <- function(model, spec, data, subject, pred_rand) {
     warmup = 0
   )
   model <- model_fit$fit
-  pred_fixed <- reservoirnet::predict_seq(node = model,
-                                          X = train_data[["X"]],
-                                          stateful = FALSE)
+  pred_fixed <- reservoirnet::predict_seq(
+    node = model,
+    X = train_data[["X"]],
+    stateful = FALSE
+  )
   pred_fixed <- .reshape_pred_of_rnn(pred_fixed, data, subject)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }

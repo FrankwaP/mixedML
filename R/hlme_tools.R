@@ -11,9 +11,9 @@ PRED_RAND <- "__PRED_RAND"
 # utiliser "browser()" dans le code
 # puis "devtools::test()" ou "devtools::test_file(…)" dans la console!
 
-.check_initiate_random_hlme <- function(full_random, data, subject, var.time) {
-  stopifnot(rlang::is_bare_formula(full_random))
-  if (length(full_random) != 3) {
+.check_initiate_random_hlme <- function(random_spec, data, subject, var.time) {
+  stopifnot(rlang::is_bare_formula(random_spec))
+  if (length(random_spec) != 3) {
     stop("A left side must be defined for 'random' formula")
   }
   stopifnot(is.data.frame(data))
@@ -21,17 +21,19 @@ PRED_RAND <- "__PRED_RAND"
   stopifnot(is.character(var.time))
 }
 
-initiate_random_hlme <- function(full_random,
-                                 data,
-                                 subject,
-                                 var.time,
-                                 idiag = FALSE,
-                                 cor = NULL,
-                                 maxiter) {
-  .check_initiate_random_hlme(full_random, data, subject, var.time)
+initiate_random_hlme <- function(
+  random_spec,
+  cor,
+  data,
+  subject,
+  var.time,
+  idiag = FALSE,
+  maxiter
+) {
+  .check_initiate_random_hlme(random_spec, data, subject, var.time)
   # preparing the hlme formula inputs
-  left <- .get_left_side_string(full_random)
-  right <- .get_right_side_string(full_random)
+  left <- .get_left_side_string(random_spec)
+  right <- .get_right_side_string(random_spec)
   fixed_ <- as.formula(paste0(left, "~1"))
   random_ <- as.formula(paste0("~", right))
 
@@ -75,7 +77,10 @@ fit_random_hlme <- function(random_hlme, data, pred_fixed) {
   data[left] <- data[left] - pred_fixed
   random_hlme <- update(random_hlme, data = data, B = random_hlme$best)
   stopifnot(random_hlme$best["intercept"] == 0.)
-  return(list("model" = random_hlme, "pred_rand" = random_hlme$pred[["pred_ss"]]))
+  return(list(
+    "model" = random_hlme,
+    "pred_rand" = random_hlme$pred[["pred_ss"]]
+  ))
 }
 
 forecast_hlme <- function(random_hlme, data, pred_fixed) {
@@ -91,11 +96,17 @@ forecast_hlme <- function(random_hlme, data, pred_fixed) {
 
   # initialization with the marginal effects
   # we have checked that calculating the marginal prediction gives 0 with
-  data[PRED_RAND] <- as.vector(predictY(random_hlme, newdata = data, marg = TRUE)$pred)
+  data[PRED_RAND] <- as.vector(
+    predictY(random_hlme, newdata = data, marg = TRUE)$pred
+  )
   if (max(abs(data[PRED_RAND])) > 0) {
-    message("The marginal effects are different from 0: this is not a 100% random effects model.")
+    message(
+      "The marginal effects are different from 0: this is not a 100% random effects model."
+    )
   } else {
-    message("The marginal effects are all equal to 0: this is a 100% random effects model.")
+    message(
+      "The marginal effects are all equal to 0: this is a 100% random effects model."
+    )
   }
   time_unq <- sort(unique(data[[var.time]]))
   for (i_time in time_unq[-1]) {
@@ -109,7 +120,9 @@ forecast_hlme <- function(random_hlme, data, pred_fixed) {
           actual_subject <- actual_data[i_row, subject]
           ui_subject <- ui[ui[, subject] == actual_subject, ]
           if (nrow(ui_subject) == 1) {
-            reffects <- rowSums(actual_data[i_row, x_labels] * ui_subject[, x_labels])
+            reffects <- rowSums(
+              actual_data[i_row, x_labels] * ui_subject[, x_labels]
+            )
             data[i_row, PRED_RAND] <- data[i_row, PRED_RAND] + reffects
           } else if (nrow(ui_subject) > 1) {
             stop("Problem with method!")
@@ -117,7 +130,6 @@ forecast_hlme <- function(random_hlme, data, pred_fixed) {
         }
       },
       error = function(e) {
-
       }
     )
   }

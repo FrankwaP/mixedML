@@ -1,9 +1,9 @@
 test_that("hlme_full_use", {
-  eps <- 0.01  # correlated with list_hlme_args
+  eps <- 0.01 # correlated with list_hlme_args
   data <- data_hlme
   ##########
   model <- initiate_random_hlme(
-    full_random = Y ~ X1 + X2 + X3,
+    random_spec = Y ~ X1 + X2 + X3,
     data = data,
     subject = "ID",
     var.time = "Time",
@@ -13,9 +13,11 @@ test_that("hlme_full_use", {
   expect_s3_class(model, "hlme")
   #########
   k <- 0.5
-  results0 <- fit_random_hlme(random_hlme = model,
-                              data = data,
-                              pred_fixed = k * data[["Y"]])
+  results0 <- fit_random_hlme(
+    random_hlme = model,
+    data = data,
+    pred_fixed = k * data[["Y"]]
+  )
   expect_type(results0, "list")
   expect_named(results0, c("model", "pred_rand"))
   expect_s3_class(results0$model, "hlme")
@@ -27,9 +29,12 @@ test_that("hlme_full_use", {
     data = data,
     pred_fixed = k * data[["Y"]]
   )
-  expect_true(mean(abs(
-    results1$model$best - results0$model$best
-  )) > eps)
+  expect_true(
+    mean(abs(
+      results1$model$best - results0$model$best
+    )) >
+      eps
+  )
   ##########
   k <- 0.5
   results3 <- forecast_hlme(
