@@ -17,7 +17,8 @@ test_that("mixedml works", {
     cor = NULL,
     control_hlme = list(
       subject = "willraiseawarning",
-      var.time = "willraiseawarning"
+      var.time = "willraiseawarning",
+      maxiter = 50
     ),
     control_reservoir = list(
       units = 20,
@@ -28,5 +29,16 @@ test_that("mixedml works", {
     control_mixedml = list(conv_ratio_thresh = 0.01, patience = 1)
   )
 
-  expect_named(output, c("fixed_model", "random_model", "mse_list"))
+  expect_named(
+    output,
+    c(
+      'subject',
+      'time',
+      'fixed_spec',
+      'random_spec',
+      'fixed_model',
+      'random_model',
+      'mse_list'
+    )
+  )
 })
