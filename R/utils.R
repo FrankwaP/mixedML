@@ -58,3 +58,48 @@
     stop("Please sort the data by subject and time beforehand!")
   }
 }
+
+
+.clean_control <- function(
+  control,
+  control_name,
+  mandatory_names,
+  avoid_names
+) {
+  stopifnot(is.list(control))
+  stopifnot(is.character(control_name))
+  stopifnot(is.null(mandatory_names) || is.vector(mandatory_names))
+  stopifnot(is.null(avoid_names) || is.vector(avoid_names))
+  #############
+  diff_ <- setdiff(mandatory_names, names(control))
+  if (length(diff_) != 0) {
+    stop(paste(control_name, "must contain", diff_))
+  }
+  #
+  inter_ <- intersect(avoid_names, names(control))
+  if (length(inter_) > 0) {
+    warning(
+      paste(
+        "Parameter",
+        inter_,
+        "of",
+        control_name,
+        "are already defined in MixedML and will be ignored."
+      )
+    )
+    control[inter_] <- NULL
+  }
+  return(control)
+}
+
+
+# reticulate ----
+.set_r_attr_to_py_obj <- function(py_obj, name, r_value) {
+  reticulate::py_set_attr(py_obj, name, reticulate::r_to_py(r_value))
+}
+
+.get_r_attr_from_py_obj <- function(py_obj, name) {
+  return(reticulate::py_to_r(reticulate::py_get_attr(py_obj, name)))
+}
+
+
