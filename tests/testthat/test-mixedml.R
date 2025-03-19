@@ -8,7 +8,7 @@ data <- data_mixedml
 data[, to_scale] <- scale(data[, to_scale])
 
 test_that("mixedml works", {
-  output <- reservoir_mixedml(
+  mixed_ml_model <- reservoir_mixedml(
     fixed_spec = fixed_spec,
     random_spec = random_spec,
     data = data,
@@ -31,7 +31,7 @@ test_that("mixedml works", {
   )
 
   expect_named(
-    output,
+    mixed_ml_model,
     c(
       "subject",
       "time",
@@ -43,4 +43,6 @@ test_that("mixedml works", {
       "residuals"
     )
   )
+
+  pred <- predict(mixed_ml_model, data)
 })
