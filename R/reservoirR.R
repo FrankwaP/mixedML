@@ -6,7 +6,7 @@
 
 # reticulate ----
 reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
-reservoirpy$verbosity(as.interger(0))
+reservoirpy$verbosity(as.integer(0))
 .get_reservoir <- reservoirpy$nodes$Reservoir
 .get_ridge <- reservoirpy$nodes$Ridge
 .link_nodes <- reservoirpy$link
