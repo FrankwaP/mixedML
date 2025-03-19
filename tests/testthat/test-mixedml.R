@@ -1,9 +1,9 @@
 fixed_spec <- y_mixed ~ x1 + x2 + x3
 random_spec <- y_mixed ~ x1 + x2
-subject = 'subject'
-time = 'time'
+subject = "subject"
+time = "time"
 
-to_scale <- c('x1', 'x2', 'x3')
+to_scale <- c("x1", "x2", "x3")
 data <- data_mixedml
 data[, to_scale] <- scale(data[, to_scale])
 
@@ -24,7 +24,8 @@ test_that("mixedml works", {
       units = 20,
       lr = 0.1,
       sr = 1.3,
-      ridge = 1e-3
+      ridge = 1e-3,
+      warmup = 2
     ),
     control_mixedml = list(conv_ratio_thresh = 0.01, patience = 1)
   )
@@ -32,13 +33,14 @@ test_that("mixedml works", {
   expect_named(
     output,
     c(
-      'subject',
-      'time',
-      'fixed_spec',
-      'random_spec',
-      'fixed_model',
-      'random_model',
-      'mse_list'
+      "subject",
+      "time",
+      "fixed_spec",
+      "random_spec",
+      "fixed_model",
+      "random_model",
+      "mse_list",
+      "residuals"
     )
   )
 })

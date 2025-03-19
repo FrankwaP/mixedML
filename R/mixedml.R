@@ -4,7 +4,6 @@
 
 MIXEDML_CLASS <- "MixedML_Model"
 
-
 .test_reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
@@ -25,10 +24,13 @@ MIXEDML_CLASS <- "MixedML_Model"
   stopifnot(is.character(subject))
   stopifnot(subject %in% names(data))
   stopifnot(is.character(time))
-  stopifnot(is.null(cor) | is.call(cor))
   stopifnot(time %in% names(data))
-}
+  stopifnot(
+    is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
+  )
 
+  .check_sorted_data(data, subject, time)
+}
 
 .prepare_control_mixedml <- function(control) {
   stopifnot(is.list(control))
@@ -78,7 +80,11 @@ reservoir_mixedml <- function(
     time,
     control_hlme
   )
-  fixed_model <- .initiate_reservoirR_from_control(control_reservoir)
+  fixed_model <- .initiate_reservoirR(
+    fixed_spec,
+    subject,
+    control_reservoir
+  )
   conv_ratio_thresh <- control_mixedml[["conv_ratio_thresh"]]
   patience <- control_mixedml[["patience"]]
 
@@ -89,23 +95,19 @@ reservoir_mixedml <- function(
   mse_list <- c()
   mse_min <- Inf
   while (TRUE) {
-    print(paste0("step#", istep, ": fixed_spec effects"))
-    fixed_results <- .fit_reservoirR(
-      fixed_model,
-      fixed_spec,
-      data,
-      subject,
-      time,
-      pred_rand
-    )
+    print(paste0("step#", istep, ": fixed effects"))
+    fixed_results <- .fit_reservoirR(fixed_model, data, pred_rand)
     fixed_model <- fixed_results$model
     pred_fixed <- fixed_results$pred_fixed
     #
+    print(paste0("step#", istep, ": mixed effects"))
     random_results <- .fit_random_hlme(random_model, data, pred_fixed)
     random_model <- random_results$model
     pred_rand <- random_results$pred_rand
     #
-    mse <- mean((pred_fixed + pred_rand - data[[target_name]])**2)
+    residuals <- pred_fixed + pred_rand - data[[target_name]]
+    mse <- mean(residuals**2)
+    print(paste0("step#", istep, ": MSE = ", mse))
     mse_list <- c(mse_list, mse)
 
     if (mse < (1 - conv_ratio_thresh) * mse_min) {
@@ -113,7 +115,7 @@ reservoir_mixedml <- function(
     } else {
       count_conv <- count_conv + 1
       if (count_conv > patience) {
-        print(mse_list)
+        # print(mse_list)
         break
       }
     }
@@ -121,6 +123,7 @@ reservoir_mixedml <- function(
       mse_min <- mse
     }
   }
+
   output <- (list(
     "subject" = subject,
     "time" = time,
@@ -128,12 +131,12 @@ reservoir_mixedml <- function(
     "random_spec" = random_spec,
     "fixed_model" = fixed_model,
     "random_model" = random_model,
-    "mse_list" = mse_list
+    "mse_list" = mse_list,
+    "residuals" = residuals
   ))
   class(output) <- MIXEDML_CLASS
   return(output)
 }
-
 
 # prediction ----
 
@@ -147,11 +150,21 @@ predict <- function(model, data) {
   #
   pred_fixed <- .predict_reservoirR(
     model$fixed_model,
-    model$fixed_spec,
     data,
     model$subject,
-    model$time
   )
   pred_mixed <- .predict_random_hlme(model$random_model, data)
   return(pred_fixed + pred_mixed)
+}
+
+# summary
+plot_conv <- function(model, ylog = TRUE) {
+  plot(
+    1:length(model$mse_list),
+    model$mse_list,
+    type = "o",
+    xlab = model$time,
+    ylab = "MSE",
+    ylog = ylog
+  )
 }
