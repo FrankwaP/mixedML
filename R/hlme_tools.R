@@ -3,54 +3,25 @@ library(lcmm)
 PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
-
 # initialization ----
 .prepare_control_hlme <- function(control) {
-  stopifnot(is.list(control))
-
-  mandatory <- c("maxiter")
-  diff_ <- setdiff(mandatory, names(control))
-  if (length(diff_) != 0) {
-    stop(paste0("control_hlme must contain ", diff_))
-  }
+  .clean_control(
+    control,
+    "control_hlme",
+    mandatory_names = c("maxiter"),
+    avoid_names = c(
+      "fixed",
+      "random",
+      "data",
+      "cor",
+      "idiag",
+      "subject",
+      "var.time"
+    )
+  )
   stopifnot(control$maxiter == round(control$maxiter))
   stopifnot(control$maxiter > 0)
-  #
-  avoid <- c("fixed", "random", "data", "cor", "idiag", "subject", "var.time")
-  inter <- intersect(avoid, names(control))
-  if (length(inter) > 0) {
-    warning(
-      paste0(
-        "Parameter ",
-        inter,
-        " are already defined in MixedML and will be ignored.\n"
-      )
-    )
-  }
-  control[avoid] <- NULL
   return(control)
-}
-
-
-.test_initiate_random_hlme <- function(
-  random_spec,
-  cor,
-  data,
-  subject,
-  var.time
-) {
-  stopifnot(rlang::is_bare_formula(random_spec))
-  if (length(random_spec) != 3) {
-    stop("A left side must be defined for 'random' formula")
-  }
-  stopifnot(
-    is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
-  )
-  stopifnot(is.data.frame(data))
-  stopifnot(is.character(subject))
-  stopifnot(subject %in% names(data))
-  stopifnot(is.character(var.time))
-  stopifnot(var.time %in% names(data))
 }
 
 .initiate_random_hlme <- function(
@@ -61,7 +32,6 @@ PRED_RAND <- "__PRED_RAND"
   var.time,
   control
 ) {
-  .test_initiate_random_hlme(random_spec, cor, data, subject, var.time)
   control <- .prepare_control_hlme(control)
 
   # preparing the hlme formula inputs
