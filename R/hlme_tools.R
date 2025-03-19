@@ -92,19 +92,14 @@ PRED_RAND <- "__PRED_RAND"
   data[intercept] <- 1
 
   # initialization with the marginal effects
-  # we have checked that calculating the marginal prediction gives 0 with
   data[PRED_RAND] <- as.vector(
     predictY(random_hlme, newdata = data, marg = TRUE)$pred
   )
+  # … but they shold be 0
   if (max(abs(data[PRED_RAND])) > 0) {
-    message(
+    stop(
       "The marginal effects are different from 0: ",
       "this is not a 100% random effects model."
-    )
-  } else {
-    message(
-      "The marginal effects are all equal to 0: ",
-      "this is a 100% random effects model."
     )
   }
   time_unq <- sort(unique(data[[var.time]]))
