@@ -115,7 +115,6 @@ reservoir_mixedml <- function(
     } else {
       count_conv <- count_conv + 1
       if (count_conv > patience) {
-        # print(mse_list)
         break
       }
     }

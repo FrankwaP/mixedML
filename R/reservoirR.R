@@ -6,6 +6,7 @@
 
 # reticulate ----
 reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
+reservoirpy$verbosity(as.interger(0))
 .get_reservoir <- reservoirpy$nodes$Reservoir
 .get_ridge <- reservoirpy$nodes$Ridge
 .link_nodes <- reservoirpy$link
@@ -33,20 +34,19 @@ reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
   )
   #
   stopifnot(control$units == round(control$units))
-  stopifnot(0 < control$units)
+  stopifnot(0. < control$units)
   control$units <- as.integer(control$units)
   #
   stopifnot(is.numeric(control$lr))
-  stopifnot(0 < control$lr & control$lr < 1)
+  stopifnot(0. <= control$lr & control$lr <= 1.)
   #
   stopifnot(is.numeric(control$sr))
-  stopifnot(0 < control$sr)
   #
   stopifnot(is.numeric(control$ridge))
-  stopifnot(0 < control$ridge)
+  stopifnot(0 <= control$ridge)
   #
   stopifnot(control$warmup == round(control$warmup))
-  stopifnot(0 < control$warmup)
+  stopifnot(0 <= control$warmup)
   control$warmup <- as.integer(control$warmup)
   #
   return(control)
@@ -62,11 +62,7 @@ reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
   # will be used for both reservoir and ridge
   # so far no problem as I never had this use case
   reservoir <- .call_with_control(.get_reservoir, control)
-  # control_reservoir <- control[intersect(names(control), .param_reservoir)]
-  # reservoir <- do.call(.get_reservoir, control_reservoir)
   ridge <- .call_with_control(.get_ridge, control)
-  # control_ridge <- control[intersect(names(control), .param_ridge)]
-  # ridge <- do.call(.get_ridge, control_ridge)
   model <- .link_nodes(reservoir, ridge)
   # Adding the remaining attributes to the model so we can use them for fit and predict
   params_union <- union(.param_reservoir, .param_ridge)
@@ -106,7 +102,7 @@ reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
 .predict_reservoirR <- function(model, data, subject, data_reshaped = NULL) {
   model_attr <- .get_r_attr_from_py_obj(model, "__dict__")
   if (is.null(data_reshaped)) {
-    data_reshaped <- .reshape_for_rnn(fixed_spec, data, subject)
+    data_reshaped <- .reshape_for_rnn(model_attr$fixed_spec, data, subject)
   } else {
     # shortcut to avoid redoing this operation
     stopifnot(setequal(names(data_reshaped), c('X', 'Y')))
