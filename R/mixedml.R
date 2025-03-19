@@ -121,6 +121,7 @@ reservoir_mixedml <- function(
     if (mse < mse_min) {
       mse_min <- mse
     }
+    istep <- istep + 1
   }
 
   output <- (list(
