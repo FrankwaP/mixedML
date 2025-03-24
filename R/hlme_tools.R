@@ -1,5 +1,3 @@
-library(lcmm)
-
 PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
@@ -47,7 +45,7 @@ PRED_RAND <- "__PRED_RAND"
   # initialization with maxiter = 0
   maxiter_backup <- control$maxiter
   control$maxiter <- 1
-  random_hlme <- do.call(hlme, control)
+  random_hlme <- do.call(lcmm::hlme, control)
   random_hlme$best[["intercept"]] <- 0. # "$" does not work (conversion to list)
   random_hlme$call$maxiter <- maxiter_backup
   return(random_hlme)
@@ -93,9 +91,9 @@ PRED_RAND <- "__PRED_RAND"
 
   # initialization with the marginal effects
   data[PRED_RAND] <- as.vector(
-    predictY(random_hlme, newdata = data, marg = TRUE)$pred
+    lcmm::predictY(random_hlme, newdata = data, marg = TRUE)$pred
   )
-  # … but they shold be 0
+  # … but they should be 0
   if (max(abs(data[PRED_RAND])) > 0) {
     stop(
       "The marginal effects are different from 0: ",
