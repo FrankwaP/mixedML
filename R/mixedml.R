@@ -95,19 +95,19 @@ reservoir_mixedml <- function(
   mse_list <- c()
   mse_min <- Inf
   while (TRUE) {
-    print(paste0("step#", istep, ": fixed effects"))
+    cat(paste0("step#", istep, ": fixed effects"))
     fixed_results <- .fit_reservoir(fixed_model, data, pred_rand)
     fixed_model <- fixed_results$model
     pred_fixed <- fixed_results$pred_fixed
     #
-    print(paste0("step#", istep, ": mixed effects"))
+    cat(paste0("step#", istep, ": mixed effects"))
     random_results <- .fit_random_hlme(random_model, data, pred_fixed)
     random_model <- random_results$model
     pred_rand <- random_results$pred_rand
     #
     residuals <- pred_fixed + pred_rand - data[[target_name]]
     mse <- mean(residuals**2)
-    print(paste0("step#", istep, ": MSE = ", mse))
+    cat(paste0("step#", istep, ": MSE = ", mse))
     mse_list <- c(mse_list, mse)
 
     if (mse < (1 - conv_ratio_thresh) * mse_min) {
