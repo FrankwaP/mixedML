@@ -1,6 +1,6 @@
 test_that("hlme_full_use", {
   eps <- 0.01 # correlated with list_hlme_args
-  data <- data_hlme
+  data <- lcmm::data_hlme
   ##########
   model <- .initiate_random_hlme(
     random_spec = Y ~ X1 + X2 + X3,
