@@ -133,7 +133,6 @@ reservoirpy$verbosity(as.integer(0))
   check <- .combine_fit(res1, res2)
   result <- foreach(reservoir = iter(model), .combine = .combine_fit) %dopar%
     {
-      print(reservoir)
       .fit_single_reservoir(reservoir, data, pred_rand)
     }
   return(result)
