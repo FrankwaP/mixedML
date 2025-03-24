@@ -25,7 +25,8 @@ test_that("mixedml works", {
       lr = 0.1,
       sr = 1.3,
       ridge = 1e-3,
-      warmup = 2
+      warmup = 2,
+      seeds = c(666, 667)
     ),
     control_mixedml = list(conv_ratio_thresh = 0.01, patience = 1)
   )

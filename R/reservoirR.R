@@ -4,6 +4,9 @@
 # all the different Nodes (which have different parameters)…
 # So yeah I directly use reticulate
 
+library(foreach)
+library(doParallel)
+
 # reticulate ----
 reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
 reservoirpy$verbosity(as.integer(0))
@@ -29,7 +32,7 @@ reservoirpy$verbosity(as.integer(0))
   .clean_control(
     control,
     "control_reservoir",
-    mandatory_names = c("units", "lr", "sr", "ridge", "warmup"),
+    mandatory_names = c("units", "lr", "sr", "ridge", "warmup", "seeds"),
     avoid_names = c()
   )
   #
@@ -49,18 +52,12 @@ reservoirpy$verbosity(as.integer(0))
   stopifnot(0 <= control$warmup)
   control$warmup <- as.integer(control$warmup)
   #
+  stopifnot(is.vector(control$seeds))
+  stopifnot(is.numeric(control$seeds))
   return(control)
 }
 
-.initiate_reservoirR <- function(
-  fixed_spec,
-  subject,
-  control
-) {
-  control <- .prepare_control_reservoir(control)
-  # with this method, "input_bias" and "bias"
-  # will be used for both reservoir and ridge
-  # so far no problem as I never had this use case
+.initiate_single_reservoir <- function(fixed_spec, subject, control) {
   reservoir <- .call_with_control(.get_reservoir, control)
   ridge <- .call_with_control(.get_ridge, control)
   model <- .link_nodes(reservoir, ridge)
@@ -75,8 +72,30 @@ reservoirpy$verbosity(as.integer(0))
   return(model)
 }
 
+.initiate_reservoir <- function(
+  fixed_spec,
+  subject,
+  control
+) {
+  control <- .prepare_control_reservoir(control)
+  # with this method, "input_bias" and "bias"
+  # will be used for both reservoir and ridge
+  # so far no problem as I never had this use case
+  model_list <- list()
+  for (seed in control$seeds) {
+    tmp_control <- control
+    tmp_control$seed <- as.integer(seed)
+    tmp_control$seeds <- NULL
+    model_list <- c(
+      model_list,
+      .initiate_single_reservoir(fixed_spec, subject, tmp_control)
+    )
+  }
+  return(model_list)
+}
+
 # fitting/training ----
-.fit_reservoirR <- function(model, data, pred_rand) {
+.fit_single_reservoir <- function(model, data, pred_rand) {
   model_attr <- .get_r_attr_from_py_obj(model, "__dict__")
   fixed_spec <- model_attr$fixed_spec
   subject <- model_attr$subject
@@ -93,13 +112,40 @@ reservoirpy$verbosity(as.integer(0))
     model_attr
   )
   model <- .call_with_control(model$fit, control)
-  pred_fixed <- .predict_reservoirR(model, data, subject, data_reshaped)
+  pred_fixed <- .predict_single_reservoir(model, data, subject, data_reshaped)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }
 
+.combine_fit <- function(...) {
+  list_result <- list(...)
+  models <- list()
+  preds <- c()
+  for (res in list_result) {
+    models <- c(models, res$model)
+    preds <- cbind(preds, res$pred_fixed)
+  }
+  return(list("model" = models, "pred_fixed" = rowMeans(preds)))
+}
+
+.fit_reservoir <- function(model, data, pred_rand) {
+  res1 <- .fit_single_reservoir(model[[1]], data, pred_rand)
+  res2 <- .fit_single_reservoir(model[[2]], data, pred_rand)
+  check <- .combine_fit(res1, res2)
+  result <- foreach(reservoir = iter(model), .combine = .combine_fit) %dopar%
+    {
+      print(reservoir)
+      .fit_single_reservoir(reservoir, data, pred_rand)
+    }
+  return(result)
+}
 
 # prediction ----
-.predict_reservoirR <- function(model, data, subject, data_reshaped = NULL) {
+.predict_single_reservoir <- function(
+  model,
+  data,
+  subject,
+  data_reshaped = NULL
+) {
   model_attr <- .get_r_attr_from_py_obj(model, "__dict__")
   if (is.null(data_reshaped)) {
     data_reshaped <- .reshape_for_rnn(model_attr$fixed_spec, data, subject)
@@ -113,4 +159,12 @@ reservoirpy$verbosity(as.integer(0))
   pred_fixed <- reticulate::py_to_r(pred_fixed)
   pred_fixed <- .reshape_pred_of_rnn(pred_fixed, data, subject)
   return(pred_fixed)
+}
+
+.predict_reservoir <- function(model, data, subject, data_reshaped = NULL) {
+  result <- foreach(reservoir = iter(model), .combine = mean) %dopar%
+    {
+      .predict_single_reservoir(reservoir, data, subject, data_reshaped)
+    }
+  return(result)
 }

@@ -80,7 +80,7 @@ reservoir_mixedml <- function(
     time,
     control_hlme
   )
-  fixed_model <- .initiate_reservoirR(
+  fixed_model <- .initiate_reservoir(
     fixed_spec,
     subject,
     control_reservoir
@@ -96,7 +96,7 @@ reservoir_mixedml <- function(
   mse_min <- Inf
   while (TRUE) {
     print(paste0("step#", istep, ": fixed effects"))
-    fixed_results <- .fit_reservoirR(fixed_model, data, pred_rand)
+    fixed_results <- .fit_reservoir(fixed_model, data, pred_rand)
     fixed_model <- fixed_results$model
     pred_fixed <- fixed_results$pred_fixed
     #
@@ -149,7 +149,7 @@ reservoir_mixedml <- function(
 predict <- function(model, data) {
   .test_predict(model, data)
   #
-  pred_fixed <- .predict_reservoirR(
+  pred_fixed <- .predict_reservoir(
     model$fixed_model,
     data,
     model$subject,

@@ -5,14 +5,21 @@ data <- lcmm::data_hlme
 data[, to_scale] <- scale(data[, to_scale])
 
 test_that("reservoir works", {
-  model <- .initiate_reservoirR(
+  model <- .initiate_reservoir(
     fixed_spec = spec_formula,
     subject = "ID",
-    control = list(units = 20, lr = 0.3, sr = 1.1, ridge = 1e-3, warmup = 2)
+    control = list(
+      units = 20,
+      lr = 0.3,
+      sr = 1.1,
+      ridge = 1e-3,
+      warmup = 2,
+      seeds = c(1, 2)
+    )
   )
 
   pred_rand <- rnorm(nrow(data))
-  fit_result <- .fit_reservoirR(
+  fit_result <- .fit_reservoir(
     model,
     data,
     pred_rand
