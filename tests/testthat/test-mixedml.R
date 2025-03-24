@@ -40,7 +40,8 @@ test_that("mixedml works", {
       "fixed_model",
       "random_model",
       "mse_list",
-      "residuals"
+      "residuals",
+      "call"
     )
   )
 

@@ -132,7 +132,8 @@ reservoir_mixedml <- function(
     "fixed_model" = fixed_model,
     "random_model" = random_model,
     "mse_list" = mse_list,
-    "residuals" = residuals
+    "residuals" = residuals,
+    "call" = match.call()
   ))
   class(output) <- MIXEDML_CLASS
   return(output)
