@@ -12,6 +12,7 @@
   left <- .get_left_side_string(spec)
   right <- .get_right_side_string(spec)
   right <- gsub(" ", "", right)
+  right <- gsub("\\+*\\b1\\b\\+*", "", right)
   right <- strsplit(right, "+", fixed = TRUE)[[1]]
   return(list(y_label = left, x_labels = right))
 }
