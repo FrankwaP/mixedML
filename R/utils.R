@@ -41,7 +41,7 @@
   stopifnot(is.character(subject))
   stopifnot(subject %in% names(data))
   stopifnot(is.list(pred) | is.vector(pred))
-  stopifnot(length(pred) == max(data[subject]))
+  stopifnot(length(pred) == length(unique(data[[subject]])))
   #
   return(unsplit(pred, data[subject]))
 }
@@ -102,5 +102,3 @@
 .get_r_attr_from_py_obj <- function(py_obj, name) {
   return(reticulate::py_to_r(reticulate::py_get_attr(py_obj, name)))
 }
-
-
