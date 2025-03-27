@@ -4,13 +4,19 @@
 # all the different Nodes (which have different parameters)…
 # So yeah I directly use reticulate
 
-library(foreach)
-library(doParallel)
+# # reticulate ----
+# reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
+# reservoirpy$verbosity(as.integer(0))
 
-# reticulate ----
-reservoirpy <- reticulate::import("reservoirpy", convert = FALSE)
-reservoirpy$verbosity(as.integer(0))
-.get_reservoir <- reservoirpy$nodes$Reservoir
+mprsrvr <- reticulate::import_from_path(
+  "multiproc_reservoir",
+  path = this.path::this.dir(),
+  convert = TRUE,  # try FALSE if you've got problems
+  delay_load = FALSE
+)
+
+
+# .get_reservoir <- reservoirpy$nodes$Reservoir
 .get_ridge <- reservoirpy$nodes$Ridge
 .link_nodes <- reservoirpy$link
 
@@ -131,8 +137,14 @@ reservoirpy$verbosity(as.integer(0))
   res1 <- .fit_single_reservoir(model[[1]], data, pred_rand)
   res2 <- .fit_single_reservoir(model[[2]], data, pred_rand)
   check <- .combine_fit(res1, res2)
-  result <- foreach(reservoir = iter(model), .combine = .combine_fit) %dopar%
+  result <- foreach::foreach(
+    reservoir = iter(model),
+    .combine = .combine_fit,
+    .export = c(".fit_single_reservoir"),
+    .verbose = TRUE
+  ) %dopar%
     {
+      devtools::load_all("R/utils.R")
       .fit_single_reservoir(reservoir, data, pred_rand)
     }
   return(result)
@@ -161,9 +173,19 @@ reservoirpy$verbosity(as.integer(0))
 }
 
 .predict_reservoir <- function(model, data, subject, data_reshaped = NULL) {
-  result <- foreach(reservoir = iter(model), .combine = mean) %dopar%
+  result <- foreach(
+    reservoir = iter(model),
+    .combine = mean,
+    .export = c(".predict_single_reservoir")
+  ) %dopar%
     {
-      .predict_single_reservoir(reservoir, data, subject, data_reshaped)
+      devtools::load_all("R/utils.R")
+      .predict_single_reservoir(
+        reservoir,
+        data,
+        subject,
+        data_reshaped
+      )
     }
   return(result)
 }

@@ -99,6 +99,7 @@
   reticulate::py_set_attr(py_obj, name, reticulate::r_to_py(r_value))
 }
 
+
 .get_r_attr_from_py_obj <- function(py_obj, name) {
   return(reticulate::py_to_r(reticulate::py_get_attr(py_obj, name)))
 }
