@@ -1,13 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from itertools import repeat
+from typing import Literal
 
 from multiprocessing import Pool
 
-from numpy import array
+from numpy import array, mean, median
+from numpy import int8, int16, int32, int64
+from numpy import float16, float32, float64, float128
 from numpy.typing import NDArray
 from reservoirpy import Model  # type: ignore
-from reservoirpy.nodes import ESN, Reservoir, Ridge  # type: ignore
+from reservoirpy.nodes import Model, Reservoir, Ridge  # type: ignore
 from reservoirpy import verbosity
 
 verbosity(0)
@@ -24,10 +26,27 @@ def _mp_fit(
     options_fit: dict,
 ) -> Model:
     # we need to return a model because reservoirpy uses namespace and add "-(Copy)"
-    # when copying for multiprocessing
-    # print(".", end="")
+    # when copying for multiprocessing, so the link with the original model is lost
     model.fit(X, y, **options_fit)
     return model
+
+
+def _get_dtype(dtype):
+    """will be usefull at some point"""
+    dtypes = {
+        "float16": float16,
+        "float32": float32,
+        "float64": float64,
+        "float128": float128,
+        "int8": int8,
+        "int16": int16,
+        "int32": int32,
+        "int64": int64,
+    }
+    try:
+        return dtypes[dtype]
+    except KeyError:
+        raise ValueError(f"dtype must be one of {dtypes.keys()}")
 
 
 class ReservoirEnsemble:
@@ -36,45 +55,59 @@ class ReservoirEnsemble:
     #  2. reservoirs uses options for "fit" (like warmups)
     # … so at least here we're sure it's controlled
 
+    @staticmethod
+    def _get_agg_func(agg_func):
+        agg_funcs = {
+            "mean": lambda x: mean(x, axis=0),
+            "median": lambda x: median(x, axis=0),
+        }
+
+        try:
+            return agg_funcs[agg_func]
+        except KeyError:
+            raise ValueError(f"agg_func must be one of {agg_funcs.keys()}")
+
     def __init__(
         self,
-        reservoir_kwargs: dict,
-        ridge_kwargs: dict,
-        list_seeds: list[int],
+        list_models: list[Model],
         n_procs: int,
-        dtype: str,
+        agg_func: Literal["mean", "median"],
     ):
-        assert "dtype" not in reservoir_kwargs
-        assert "dtype" not in ridge_kwargs
-        # I have modified Rdige code so it takes **kwargs
-        self._models = [
-            Reservoir(**reservoir_kwargs, seed=seed, dtype=dtype)
-            >> Ridge(**ridge_kwargs, dtype=dtype)
-            for seed in list_seeds
-        ]
-        self._nprocs = n_procs
+        self.agg_func = self._get_agg_func(agg_func)
+        self.list_models = list_models
+        self._nprocs = min(n_procs, len(list_models))
 
     def fit(self, X: NDArray, y: NDArray, **options_fit) -> None:
         assert X.ndim == 3
         assert y.ndim == 3 and y.shape[2] == 1
         if not self._nprocs:
-            for m in self._models:
+            for m in self.list_models:
                 m.fit(X, y, **options_fit)
         else:
             with Pool(self._nprocs) as pool:
-                self._models = pool.starmap(
+                self.list_models = pool.starmap(
                     _mp_fit,
                     zip(
-                        self._models, repeat(X), repeat(y), repeat(options_fit)
+                        self.list_models,
+                        repeat(X),
+                        repeat(y),
+                        repeat(options_fit),
                     ),
                 )
 
     def run(self, X: NDArray) -> NDArray:
         assert X.ndim == 3
         if self._nprocs == 0:
-            preds = [m.run(X) for m in self._models]
+            preds = [m.run(X) for m in self.list_models]
         else:
             # with Pool(self._nprocs, initializer=_mp_initializer) as pool:
             with Pool(self._nprocs) as pool:
-                preds = pool.starmap(_mp_run, zip(self._models, repeat(X)))
-        return array(preds).mean(axis=0)
+                preds = pool.starmap(_mp_run, zip(self.list_models, repeat(X)))
+        return self.agg_func(array(preds))
+
+    predict = run
+
+
+if __name__ == "__main__":
+
+    ...
