@@ -48,6 +48,8 @@ MIXEDML_CLASS <- "MixedML_Model"
   return(control)
 }
 
+# recipe: HLME/Reservoir ----
+
 reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
@@ -55,9 +57,9 @@ reservoir_mixedml <- function(
   data,
   subject,
   time,
+  control_mixedml,
   control_hlme,
-  control_reservoir,
-  control_mixedml
+  control_reservoir
 ) {
   .test_reservoir_mixedml(
     fixed_spec,

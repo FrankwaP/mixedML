@@ -4,18 +4,23 @@ to_scale <- c("X1", "X2", "X3")
 data <- lcmm::data_hlme
 data[, to_scale] <- scale(data[, to_scale])
 
-test_that("reservoir works", {
-  model <- .initiate_reservoir(
+test_that("esn works", {
+  model <- .initiate_ens(
     fixed_spec = spec_formula,
     subject = "ID",
-    control = list(
-      units = 20,
-      lr = 0.3,
-      sr = 1.1,
-      ridge = 1e-3,
-      warmup = 2,
-      seeds = c(1, 2)
-    )
+    esn_controls = list(
+      units = 50L,
+      sr = 0.1,
+      lr = 0.2,
+      ridge = 0.001
+    ),
+    ensemble_controls = list(
+      seed_list = c(1L, 2L),
+      agg_func = 'median',
+      n_procs = 2L
+    ),
+    fit_controls = list(),
+    predict_controls = list()
   )
 
   pred_rand <- rnorm(nrow(data))

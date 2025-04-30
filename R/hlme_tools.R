@@ -2,11 +2,10 @@ PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
 # initialization ----
-.prepare_control_hlme <- function(control) {
-  .clean_control(
-    control,
-    "control_hlme",
-    mandatory_names = c("maxiter"),
+.prepare_hlme_controls <- function(hlme_control) {
+  return(.check_control(
+    hlme_control,
+    mandatory_names_checks = list(maxiter = function(x) is.integer(x) & x > 0),
     avoid_names = c(
       "fixed",
       "random",
@@ -15,11 +14,9 @@ PRED_RAND <- "__PRED_RAND"
       "idiag",
       "subject",
       "var.time"
-    )
-  )
-  stopifnot(control$maxiter == round(control$maxiter))
-  stopifnot(control$maxiter > 0)
-  return(control)
+    ),
+    avoid_names = c()
+  ))
 }
 
 .initiate_random_hlme <- function(
@@ -28,9 +25,9 @@ PRED_RAND <- "__PRED_RAND"
   data,
   subject,
   var.time,
-  control
+  hlme_control
 ) {
-  control <- .prepare_control_hlme(control)
+  control <- .prepare_hlme_controls(hlme_control)
 
   # preparing the hlme formula inputs
   left <- .get_left_side_string(random_spec)
@@ -106,7 +103,7 @@ PRED_RAND <- "__PRED_RAND"
     tryCatch(
       # we let hlme find out if he can predict or not
       {
-        ui <- predictRE(random_hlme, newdata = prev_data)
+        ui <- lcmm::predictRE(random_hlme, newdata = prev_data)
         actual_data <- data[data[var.time] == i_time, ]
         for (i_row in rownames(actual_data)) {
           actual_subject <- actual_data[i_row, subject]
