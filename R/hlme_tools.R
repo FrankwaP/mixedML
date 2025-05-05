@@ -14,8 +14,7 @@ PRED_RAND <- "__PRED_RAND"
       "idiag",
       "subject",
       "var.time"
-    ),
-    avoid_names = c()
+    )
   ))
 }
 

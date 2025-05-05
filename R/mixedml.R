@@ -11,9 +11,12 @@ MIXEDML_CLASS <- "MixedML_Model"
   data,
   subject,
   time,
-  control_hlme,
-  control_reservoir,
-  control_mixedml
+  mixedml_controls,
+  hlme_controls,
+  esn_controls,
+  ensemble_controls,
+  fit_controls,
+  predict_controls
 ) {
   stopifnot(rlang::is_bare_formula(fixed_spec))
   stopifnot(rlang::is_bare_formula(random_spec))
@@ -28,24 +31,18 @@ MIXEDML_CLASS <- "MixedML_Model"
   stopifnot(
     is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
   )
-
   .check_sorted_data(data, subject, time)
 }
 
-.prepare_control_mixedml <- function(control) {
-  stopifnot(is.list(control))
-  mandatory <- c("patience", "conv_ratio_thresh")
-  diff_ <- setdiff(mandatory, names(control))
-  if (length(diff_) != 0) {
-    stop(paste0("control must contain ", diff_))
-  }
-  conv_ratio_thresh <- control[["conv_ratio_thresh"]]
-  patience <- control[["patience"]]
-  stopifnot(is.numeric(conv_ratio_thresh))
-  stopifnot(0 <= conv_ratio_thresh & conv_ratio_thresh < 1)
-  stopifnot(round(patience) == patience)
-  stopifnot(0 <= patience)
-  return(control)
+.prepare_mixedml_controls <- function(mixedml_control) {
+  return(.check_control(
+    mixedml_control,
+    mandatory_names_checks = list(
+      patience = function(x) is.single.integer(x) & 0 < x,
+      conv_ratio_thresh = function(x) is.single.numeric(x) & 0 < x & x < 1
+    ),
+    avoid_names = c()
+  ))
 }
 
 # recipe: HLME/Reservoir ----
@@ -57,9 +54,12 @@ reservoir_mixedml <- function(
   data,
   subject,
   time,
-  control_mixedml,
-  control_hlme,
-  control_reservoir
+  mixedml_controls,
+  hlme_controls,
+  esn_controls,
+  ensemble_controls,
+  fit_controls,
+  predict_controls
 ) {
   .test_reservoir_mixedml(
     fixed_spec,
@@ -68,11 +68,14 @@ reservoir_mixedml <- function(
     data,
     subject,
     time,
-    control_hlme,
-    control_reservoir,
-    control_mixedml
+    mixedml_controls,
+    hlme_controls,
+    esn_controls,
+    ensemble_controls,
+    fit_controls,
+    predict_controls
   )
-  control_mixedml <- .prepare_control_mixedml(control_mixedml)
+  mixedml_controls <- .prepare_mixedml_controls(mixedml_controls)
   #
   random_model <- .initiate_random_hlme(
     random_spec,
@@ -80,16 +83,18 @@ reservoir_mixedml <- function(
     data,
     subject,
     time,
-    control_hlme
+    hlme_controls
   )
-  fixed_model <- .initiate_reservoir(
+  fixed_model <- .initiate_ens(
     fixed_spec,
     subject,
-    control_reservoir
+    esn_controls,
+    ensemble_controls,
+    fit_controls,
+    predict_controls
   )
-  conv_ratio_thresh <- control_mixedml[["conv_ratio_thresh"]]
-  patience <- control_mixedml[["patience"]]
-
+  conv_ratio_thresh <- mixedml_controls[["conv_ratio_thresh"]]
+  patience <- mixedml_controls[["patience"]]
   ##
   target_name <- .get_left_side_string(fixed_spec)
   pred_rand <- rep(0, nrow(data))
@@ -97,19 +102,20 @@ reservoir_mixedml <- function(
   mse_list <- c()
   mse_min <- Inf
   while (TRUE) {
-    cat(paste0("step#", istep, ": fixed effects"))
+    cat(sprintf("step#%d\n", istep))
+    cat("\tfixed effects…\n")
     fixed_results <- .fit_reservoir(fixed_model, data, pred_rand)
     fixed_model <- fixed_results$model
     pred_fixed <- fixed_results$pred_fixed
     #
-    cat(paste0("step#", istep, ": mixed effects"))
+    cat("\tmixed effects…\n")
     random_results <- .fit_random_hlme(random_model, data, pred_fixed)
     random_model <- random_results$model
     pred_rand <- random_results$pred_rand
     #
     residuals <- pred_fixed + pred_rand - data[[target_name]]
     mse <- mean(residuals**2)
-    cat(paste0("step#", istep, ": MSE = ", mse))
+    cat(sprintf("\tMSE = %.4g\n", mse))
     mse_list <- c(mse_list, mse)
 
     if (mse < (1 - conv_ratio_thresh) * mse_min) {

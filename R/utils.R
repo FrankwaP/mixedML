@@ -116,11 +116,11 @@ is.named.vector <- function(x) {
     controls <- .fix_integers_in_controls(controls)
   }
   #
-  inter_mand <- intersect(names(mandatory_names_checks), names(controls))
-  if (!setequal(inter_mand, names(controls))) {
+  diff_mand <- setdiff(names(mandatory_names_checks), names(controls))
+  if (length(diff_mand) > 0) {
     stop(sprintf(
-      '\"%s\" parameters of \"%s\" is missing',
-      inter_mand,
+      '\"%s\" parameters of \"%s\" is missing.\n',
+      diff_mand,
       control_name
     ))
   }
@@ -128,7 +128,7 @@ is.named.vector <- function(x) {
   inter_avoid <- intersect(avoid_names, names(controls))
   if (length(inter_avoid) > 0) {
     warning(sprintf(
-      "'\"%s\" parameter of \"%s\" will be ignored",
+      "'\"%s\" parameter of \"%s\" will be ignored.\n",
       inter_avoid,
       control_name
     ))
@@ -140,7 +140,7 @@ is.named.vector <- function(x) {
     check <- mandatory_names_checks[[i]]
     if (!check(controls[[name]])) {
       stop(sprintf(
-        '\"%s\" parameter of \"%s\" does not respect this condiction: %s',
+        '\"%s\" parameter of \"%s\" does not respect this condiction: %s\n',
         name,
         control_name,
         deparse(check)
@@ -157,7 +157,7 @@ is.named.vector <- function(x) {
 
   err <- function() {
     stop(sprintf(
-      'You need to setup the %s environement variable as "venv:name_of_env" or "conda:name_of_env".',
+      'You need to setup the %s environement variable as "venv:name_of_env" or "conda:name_of_env".\n',
       name
     ))
   }

@@ -15,20 +15,25 @@ test_that("mixedml works", {
     subject = subject,
     time = time,
     cor = NULL,
-    control_hlme = list(
+    mixedml_controls = list(conv_ratio_thresh = 0.01, patience = 1),
+    hlme_controls = list(
       subject = "willraiseawarning",
       var.time = "willraiseawarning",
       maxiter = 50
     ),
-    control_reservoir = list(
+    esn_controls = list(
       units = 20,
       lr = 0.1,
       sr = 1.3,
-      ridge = 1e-3,
-      warmup = 2,
-      seeds = c(666, 667)
+      ridge = 1e-3
     ),
-    control_mixedml = list(conv_ratio_thresh = 0.01, patience = 1)
+    ensemble_controls = list(
+      seed_list = c(666, 667),
+      agg_func = "median",
+      n_procs = 2
+    ),
+    fit_controls = list(warmup = 2),
+    predict_controls = list()
   )
 
   expect_named(

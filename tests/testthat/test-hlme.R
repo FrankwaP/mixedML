@@ -1,5 +1,4 @@
 test_that("hlme_full_use", {
-  eps <- 0.01 # correlated with list_hlme_args
   data <- lcmm::data_hlme
   ##########
   model <- .initiate_random_hlme(
@@ -8,7 +7,7 @@ test_that("hlme_full_use", {
     data = data,
     subject = "ID",
     var.time = "Time",
-    control = list(maxiter = 1000, idiag = TRUE)
+    hlme_control = list(maxiter = 1000, idiag = TRUE)
   )
   expect_type(model, "list")
   expect_s3_class(model, "hlme")
@@ -34,7 +33,7 @@ test_that("hlme_full_use", {
     mean(abs(
       results1$model$best - results0$model$best
     )) >
-      eps
+      0.001
   )
   ##########
   k <- 0.5
