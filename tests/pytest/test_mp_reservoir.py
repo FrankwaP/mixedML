@@ -66,3 +66,6 @@ def test_ens_2():
     )
     resmod.fit(X2, y2)
     resmod.run(X2)
+
+
+test_no_mp()
