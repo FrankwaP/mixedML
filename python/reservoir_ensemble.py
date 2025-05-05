@@ -16,15 +16,12 @@ from reservoirpy.type import Data
 verbosity(0)
 
 
-sys.path.append(Path(__file__).parent)
-logging.warning(Path(__file__).parent)
-
-if "LOKY_PICKLER" not in os.environ.keys():
-    os.environ["LOKY_PICKLER"] = "pickle"
-    logging.warning(
-        'LOKY_PICKLER was not set, and "pickle" has been chosen. '
-        "(see: https://joblib.readthedocs.io/en/stable/parallel.html#serialization-processes)"
-    )
+# if "LOKY_PICKLER" not in os.environ.keys():
+#     os.environ["LOKY_PICKLER"] = "pickle"
+#     logging.warning(
+#         'LOKY_PICKLER was not set, and "pickle" has been chosen. '
+#         "(see: https://joblib.readthedocs.io/en/stable/parallel.html#serialization-processes)"
+#     )
 
 
 def _predict_single(

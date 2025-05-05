@@ -1,9 +1,3 @@
-# I am sorry but the reservoirR package has no real interest, since it is just
-# a wrapper for reticulate which is not complicated at all.
-# Also it is actually quite confusing since it uses a single function to create
-# all the different Nodes (which have different parameters)…
-# So yeah I directly use reticulate
-
 # reticulate ----
 # REMINDER: use .fix_integer/.fix_integers_in_controls (and integer without "L" is not a real integer! )
 

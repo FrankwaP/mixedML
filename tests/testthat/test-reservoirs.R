@@ -4,6 +4,21 @@ to_scale <- c("X1", "X2", "X3")
 data <- lcmm::data_hlme
 data[, to_scale] <- scale(data[, to_scale])
 
+
+
+
+
+
+# TESTER UN AUTRE BACKEND !!!
+
+
+
+
+
+
+
+
+
 test_that("esn works", {
   model <- .initiate_ens(
     fixed_spec = spec_formula,
