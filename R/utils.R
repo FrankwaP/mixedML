@@ -30,9 +30,9 @@
   x_labels <- labels[["x_labels"]]
   y_label <- labels[["y_label"]]
 
-  # unname so reticulate convert tis as a list (not a dict)
+  # unname so reticulate convert this as a list (not a dict)
   rnn_data <- unname(split(data, data[subject]))
-  # matric so reticulate convert is as a numpy array
+  # matrix so reticulate convert this as a numpy array
   X <- lapply(rnn_data, function(df) {
     as.matrix(df[x_labels])
   })
@@ -82,78 +82,103 @@ is.named.vector <- function(x) {
   return(is.vector(x) & ((length(x) == 0) | is.character(names(x))))
 }
 
+.fix_integer <- function(value) {
+  if (is.numeric(value)) {
+    if (all(round(value) == value)) {
+      value <- as.integer(value)
+    }
+  }
+  return(value)
+}
+
+.fix_integers_in_controls <- function(controls) {
+  for (n in names(controls)) {
+    controls[[n]] <- .fix_integer(controls[[n]])
+  }
+  return(controls)
+}
+
 .check_control <- function(
   controls,
   mandatory_names_checks = NULL,
-  avoid_names = NULL
+  avoid_names = NULL,
+  convert_integer = TRUE
 ) {
+  control_name <- as.character(as.list(match.call())[['controls']])
+  #
+  stopifnot(is.named.vector(controls))
   stopifnot(is.named.vector(mandatory_names_checks))
   stopifnot(all(sapply(mandatory_names_checks, is.function)))
   stopifnot(is.null(avoid_names) | is.vector(avoid_names))
+  stopifnot(is.logical(convert_integer))
   #
-  control_name <- as.character(as.list(match.call())[['controls']])
+  if (convert_integer) {
+    controls <- .fix_integers_in_controls(controls)
+  }
   #
-  if (!is.named.vector(controls)) {
-    stop(sprintf("\"%s\" must me a named list", control_name))
+  inter_mand <- intersect(names(mandatory_names_checks), names(controls))
+  if (!setequal(inter_mand, names(controls))) {
+    stop(sprintf(
+      '\"%s\" parameters of \"%s\" is missing',
+      inter_mand,
+      control_name
+    ))
+  }
+  #
+  inter_avoid <- intersect(avoid_names, names(controls))
+  if (length(inter_avoid) > 0) {
+    warning(sprintf(
+      "'\"%s\" parameter of \"%s\" will be ignored",
+      inter_avoid,
+      control_name
+    ))
+    controls[inter_avoid] <- NULL
   }
   #
   for (i in 1:length(mandatory_names_checks)) {
     name <- names(mandatory_names_checks)[[i]]
     check <- mandatory_names_checks[[i]]
-    if (name %in% names(controls)) {
-      if (!check(controls[[name]])) {
-        stop(sprintf(
-          '\"%s\" parameter of \"%s\" does not respect this condiction: %s',
-          name,
-          control_name,
-          deparse(check)
-        ))
-      }
-    } else {
+    if (!check(controls[[name]])) {
       stop(sprintf(
-        '\"%s\" parameter of \"%s\" is missing',
+        '\"%s\" parameter of \"%s\" does not respect this condiction: %s',
         name,
-        control_name
+        control_name,
+        deparse(check)
       ))
     }
   }
-  #
-  inter_ <- intersect(avoid_names, names(controls))
-  if (length(inter_) > 0) {
-    warning(
-      paste(
-        "Parameter",
-        inter_,
-        "of",
-        control_name,
-        "will be ignored."
-      )
-    )
-    controls[inter_] <- NULL
-  }
-  #
   return(controls)
 }
 
 # reticulate ----
+.activate_environment <- function() {
+  name <- "MIXED_ML_END"
+  value <- Sys.getenv(name)
 
-# .fix_integer <- function(r_value) {
-#   if (round(r_value) == r_value) {
-#     r_value <- as.integer(r_value)
-#   }
-#   return(r_value)
-# }
-#
-# .fix_integers_in_control <- function(control) {
-#   for (n in names(control)) {
-#     control[[n]] <- .fix_integer(control[[n]])
-#   }
-# }
+  err <- function() {
+    stop(sprintf(
+      'You need to setup the %s environement variable as "venv:name_of_env" or "conda:name_of_env".',
+      name
+    ))
+  }
+  if (!grepl(':', value)) {
+    err()
+  }
+  splt <- strsplit(value, ":")
+  envtype <- splt[[1]][[1]]
+  envname <- splt[[1]][[2]]
+  if (envtype == "venv" & reticulate::virtualenv_exists(envname)) {
+    reticulate::use_virtualenv(envname)
+  } else if (envtype == "conda" & reticulate::condaenv_exists(envname)) {
+    reticulate::use_condaenv(envname)
+  } else {
+    err()
+  }
+}
 
 .set_r_attr_to_py_obj <- function(py_obj, name, r_value) {
   reticulate::py_set_attr(py_obj, name, reticulate::r_to_py(r_value))
 }
-
 
 .get_r_attr_from_py_obj <- function(py_obj, name) {
   return(reticulate::py_to_r(reticulate::py_get_attr(py_obj, name)))

@@ -5,26 +5,12 @@ data <- lcmm::data_hlme
 data[, to_scale] <- scale(data[, to_scale])
 
 
-
-
-
-
-# TESTER UN AUTRE BACKEND !!!
-
-
-
-
-
-
-
-
-
 test_that("esn works", {
   model <- .initiate_ens(
     fixed_spec = spec_formula,
     subject = "ID",
     esn_controls = list(
-      units = 50L,
+      units = 50,
       sr = 0.1,
       lr = 0.2,
       ridge = 0.001
@@ -45,6 +31,5 @@ test_that("esn works", {
     pred_rand
   )
   expect_named(fit_result, c("model", "pred_fixed"))
-  # expect_equal(class(fit_result$model), class(model))
   expect_vector(fit_result$pred_fixed)
 })

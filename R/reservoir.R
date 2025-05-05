@@ -1,16 +1,16 @@
 # reticulate ----
-# REMINDER: use .fix_integer/.fix_integers_in_controls (and integer without "L" is not a real integer! )
-
-pypath <- sprintf('%s/%s', here::here(), '/python/')
-stopifnot(dir.exists(pypath))
-module <- 'reservoir_ensemble'
-stopifnot(file.exists(sprintf('%s/%s.py', pypath, module)))
-
-retipy <- reticulate::import_from_path(module, pypath)
+.load_package <- function() {
+  .activate_environment()
+  pypath <- sprintf('%s/%s', here::here(), '/python/')
+  stopifnot(dir.exists(pypath))
+  module <- 'reservoir_ensemble'
+  stopifnot(file.exists(sprintf('%s/%s.py', pypath, module)))
+  retipy <- reticulate::import_from_path(module, pypath, convert = TRUE)
+  return(retipy)
+}
 
 
 # parameters check/modification ----
-
 .prepare_esn_controls <- function(esn_controls) {
   return(.check_control(
     esn_controls,
@@ -22,7 +22,6 @@ retipy <- reticulate::import_from_path(module, pypath)
     ),
     avoid_names = c('seed')
   ))
-  return(esn_controls)
 }
 
 
@@ -30,13 +29,12 @@ retipy <- reticulate::import_from_path(module, pypath)
   return(.check_control(
     ensemble_controls,
     mandatory_names_checks = list(
-      seed_list = is.vector,
+      seed_list = function(x) is.vector(x) & is.integer(x),
       agg_func = is.character,
       n_procs = is.single.integer
     ),
     avoid_names = c()
   ))
-  return(ensemble_controls)
 }
 
 
@@ -50,6 +48,7 @@ retipy <- reticulate::import_from_path(module, pypath)
   fit_controls,
   predict_controls
 ) {
+  retipy <- .load_package()
   esn_controls <- .prepare_esn_controls(esn_controls)
   ensemble_controls <- .prepare_ensemble_controls(ensemble_controls)
   stopifnot(is.named.vector(fit_controls))
@@ -81,7 +80,8 @@ retipy <- reticulate::import_from_path(module, pypath)
     data_reshaped,
     fit_controls = .get_r_attr_from_py_obj(model, "fit_controls")
   )
-  do.call(model$fit, controls)
+  model$fit(X = data_reshaped[["X"]], y = data_reshaped[["y"]])
+  # do.call(model$fit, controls)
   pred_fixed <- .predict_reservoir(model, data, subject, data_reshaped)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }
