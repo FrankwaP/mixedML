@@ -30,9 +30,9 @@
   x_labels <- labels[["x_labels"]]
   y_label <- labels[["y_label"]]
 
-  # unname so reticulate convert this as a list (not a dict)
+  # unname so reticulate convert tis as a list (not a dict)
   rnn_data <- unname(split(data, data[subject]))
-  # matrix so reticulate convert this as a numpy array
+  # matric so reticulate convert is as a numpy array
   X <- lapply(rnn_data, function(df) {
     as.matrix(df[x_labels])
   })
@@ -98,6 +98,21 @@ is.named.vector <- function(x) {
   return(controls)
 }
 
+.check_controls_with_function <- function(controls, controls_function) {
+  names_controls <- names(controls)
+  params_function <- formalArgs(controls_function)
+  if (!setequal(names_controls, params_function)) {
+    control_name <- as.character(as.list(match.call())[['controls']])
+    function_name <- as.character(as.list(match.call())[['controls_function']])
+    stop(sprintf(
+      "\"%s\" should be set with the function \"%s\"\n",
+      control_name,
+      function_name
+    ))
+  }
+}
+
+
 .check_control <- function(
   controls,
   mandatory_names_checks = NULL,
@@ -116,11 +131,11 @@ is.named.vector <- function(x) {
     controls <- .fix_integers_in_controls(controls)
   }
   #
-  diff_mand <- setdiff(names(mandatory_names_checks), names(controls))
-  if (length(diff_mand) > 0) {
+  inter_mand <- intersect(names(mandatory_names_checks), names(controls))
+  if (!setequal(inter_mand, names(mandatory_names_checks))) {
     stop(sprintf(
-      '\"%s\" parameters of \"%s\" is missing.\n',
-      diff_mand,
+      '\"%s\" parameters of \"%s\" is missing',
+      inter_mand,
       control_name
     ))
   }
@@ -128,7 +143,7 @@ is.named.vector <- function(x) {
   inter_avoid <- intersect(avoid_names, names(controls))
   if (length(inter_avoid) > 0) {
     warning(sprintf(
-      "'\"%s\" parameter of \"%s\" will be ignored.\n",
+      "'\"%s\" parameter of \"%s\" will be ignored",
       inter_avoid,
       control_name
     ))
@@ -140,7 +155,7 @@ is.named.vector <- function(x) {
     check <- mandatory_names_checks[[i]]
     if (!check(controls[[name]])) {
       stop(sprintf(
-        '\"%s\" parameter of \"%s\" does not respect this condiction: %s\n',
+        '\"%s\" parameter of \"%s\" does not respect this condiction: %s',
         name,
         control_name,
         deparse(check)
@@ -151,34 +166,18 @@ is.named.vector <- function(x) {
 }
 
 # reticulate ----
-.activate_environment <- function() {
-  name <- "MIXED_ML_END"
-  value <- Sys.getenv(name)
 
-  err <- function() {
-    stop(sprintf(
-      'You need to setup the %s environement variable as "venv:name_of_env" or "conda:name_of_env".\n',
-      name
-    ))
-  }
-  if (!grepl(':', value)) {
-    err()
-  }
-  splt <- strsplit(value, ":")
-  envtype <- splt[[1]][[1]]
-  envname <- splt[[1]][[2]]
-  if (envtype == "venv" & reticulate::virtualenv_exists(envname)) {
-    reticulate::use_virtualenv(envname)
-  } else if (envtype == "conda" & reticulate::condaenv_exists(envname)) {
-    reticulate::use_condaenv(envname)
-  } else {
-    err()
+.prompt_environment <- function() {
+  if (!(reticulate::virtualenv_exists() | reticulate::condaenv_exists())) {
+    list_venv <- reticulate::virtualenv_list()
   }
 }
+
 
 .set_r_attr_to_py_obj <- function(py_obj, name, r_value) {
   reticulate::py_set_attr(py_obj, name, reticulate::r_to_py(r_value))
 }
+
 
 .get_r_attr_from_py_obj <- function(py_obj, name) {
   return(reticulate::py_to_r(reticulate::py_get_attr(py_obj, name)))

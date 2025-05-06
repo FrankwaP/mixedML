@@ -7,7 +7,7 @@ test_that("hlme_full_use", {
     data = data,
     subject = "ID",
     var.time = "Time",
-    hlme_control = list(maxiter = 1000, idiag = TRUE)
+    hlme_control = hlme_ctrls(maxiter = 1000, idiag = TRUE)
   )
   expect_type(model, "list")
   expect_s3_class(model, "hlme")

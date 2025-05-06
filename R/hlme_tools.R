@@ -2,20 +2,8 @@ PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
 # initialization ----
-.prepare_hlme_controls <- function(hlme_control) {
-  return(.check_control(
-    hlme_control,
-    mandatory_names_checks = list(maxiter = function(x) is.integer(x) & x > 0),
-    avoid_names = c(
-      "fixed",
-      "random",
-      "data",
-      "cor",
-      "idiag",
-      "subject",
-      "var.time"
-    )
-  ))
+hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
+  return(as.list(environment()))
 }
 
 .initiate_random_hlme <- function(
@@ -24,24 +12,24 @@ PRED_RAND <- "__PRED_RAND"
   data,
   subject,
   var.time,
-  hlme_control
+  hlme_controls
 ) {
-  control <- .prepare_hlme_controls(hlme_control)
+  .check_controls_with_function(hlme_controls, hlme_ctrls)
 
   # preparing the hlme formula inputs
   left <- .get_left_side_string(random_spec)
   right <- .get_right_side_string(random_spec)
-  control$fixed <- as.formula(paste0(left, "~1"))
-  control$random <- as.formula(paste0("~", right))
-  control$cor <- cor
-  control$data <- data
-  control$subject <- subject
-  control$var.time <- var.time
-  control$posfix <- c(1)
+  hlme_controls$fixed <- as.formula(paste0(left, "~1"))
+  hlme_controls$random <- as.formula(paste0("~", right))
+  hlme_controls$cor <- cor
+  hlme_controls$data <- data
+  hlme_controls$subject <- subject
+  hlme_controls$var.time <- var.time
+  hlme_controls$posfix <- c(1)
   # initialization with maxiter = 0
-  maxiter_backup <- control$maxiter
-  control$maxiter <- 1
-  random_hlme <- do.call(lcmm::hlme, control)
+  maxiter_backup <- hlme_controls$maxiter
+  hlme_controls$maxiter <- 1
+  random_hlme <- do.call(lcmm::hlme, hlme_controls)
   random_hlme$best[["intercept"]] <- 0. # "$" does not work (conversion to list)
   random_hlme$call$maxiter <- maxiter_backup
   return(random_hlme)

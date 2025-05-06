@@ -1,6 +1,6 @@
 # reticulate ----
 .load_package <- function() {
-  .activate_environment()
+  .prompt_environment()
   pypath <- sprintf('%s/%s', here::here(), '/python/')
   stopifnot(dir.exists(pypath))
   module <- 'reservoir_ensemble'
@@ -11,30 +11,47 @@
 
 
 # parameters check/modification ----
-.prepare_esn_controls <- function(esn_controls) {
-  return(.check_control(
-    esn_controls,
-    mandatory_names_checks = list(
-      units = is.single.integer,
-      lr = is.single.numeric,
-      sr = is.single.numeric,
-      ridge = is.single.numeric
-    ),
-    avoid_names = c('seed')
-  ))
+esn_ctrls <- function(
+  units = NULL,
+  lr = 1.0,
+  sr = NULL,
+  ridge = 0.0,
+  feedback = FALSE
+) {
+  units <- .fix_integer(units)
+  stopifnot(is.single.integer(units))
+  stopifnot(is.single.numeric(lr))
+  stopifnot(is.single.numeric(sr))
+  stopifnot(is.single.numeric(ridge))
+  stopifnot(is.logical(feedback))
+  return(as.list(environment()))
 }
 
+ensemble_ctrls <- function(
+  seed_list = c(1, 2, 3),
+  agg_func = 'median',
+  n_procs = 1
+) {
+  seed_list <- .fix_integer(seed_list)
+  n_procs <- .fix_integer(n_procs)
+  stopifnot(is.integer(seed_list))
+  stopifnot(is.character(agg_func))
+  stopifnot(is.single.integer(n_procs))
+  return(as.list(environment()))
+}
 
-.prepare_ensemble_controls <- function(ensemble_controls) {
-  return(.check_control(
-    ensemble_controls,
-    mandatory_names_checks = list(
-      seed_list = function(x) is.vector(x) & is.integer(x),
-      agg_func = is.character,
-      n_procs = is.single.integer
-    ),
-    avoid_names = c()
-  ))
+fit_ctrls <- function(warmup = 0, stateful = TRUE, reset = FALSE) {
+  warmup <- .fix_integer(warmup)
+  stopifnot(is.single.integer(warmup))
+  stopifnot(is.logical(stateful))
+  stopifnot(is.logical(reset))
+  return(as.list(environment()))
+}
+
+predict_ctrls <- function(stateful = TRUE, reset = FALSE) {
+  stopifnot(is.logical(stateful))
+  stopifnot(is.logical(reset))
+  return(as.list(environment()))
 }
 
 
@@ -42,14 +59,17 @@
 .initiate_ens <- function(
   fixed_spec,
   subject,
-  esn_controls,
-  ensemble_controls,
-  fit_controls,
-  predict_controls
+  esn_controls = esn_ctrls(),
+  ensemble_controls = ensemble_ctrls(),
+  fit_controls = fit_ctrls(),
+  predict_controls = predict_ctrls()
 ) {
   retipy <- .load_package()
-  esn_controls <- .prepare_esn_controls(esn_controls)
-  ensemble_controls <- .prepare_ensemble_controls(ensemble_controls)
+  .check_controls_with_function(esn_controls, esn_ctrls)
+  .check_controls_with_function(ensemble_controls, ensemble_ctrls)
+  .check_controls_with_function(fit_controls, fit_ctrls)
+  .check_controls_with_function(predict_controls, predict_ctrls)
+
   stopifnot(is.named.vector(fit_controls))
   stopifnot(is.named.vector(predict_controls))
   controls <- c(list(esn_controls = esn_controls), ensemble_controls)
@@ -77,10 +97,9 @@
   #
   controls <- c(
     data_reshaped,
-    fit_controls = .get_r_attr_from_py_obj(model, "fit_controls")
+    list(fit_controls = .get_r_attr_from_py_obj(model, "fit_controls"))
   )
-  model$fit(X = data_reshaped[["X"]], y = data_reshaped[["y"]])
-  # do.call(model$fit, controls)
+  do.call(model$fit, controls)
   pred_fixed <- .predict_reservoir(model, data, subject, data_reshaped)
   return(list("model" = model, "pred_fixed" = pred_fixed))
 }
@@ -103,7 +122,7 @@
   #
   controls <- c(
     data_reshaped["X"],
-    predict_controls = .get_r_attr_from_py_obj(model, "predict_controls")
+    list(predict_controls = .get_r_attr_from_py_obj(model, "predict_controls"))
   )
   pred_fixed <- do.call(model$predict, controls)
   pred_fixed <- .reshape_pred_of_rnn(pred_fixed, data, subject)

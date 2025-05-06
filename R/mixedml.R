@@ -4,6 +4,19 @@
 
 MIXEDML_CLASS <- "MixedML_Model"
 
+mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
+  patience <- .fix_integer(patience)
+  stopifnot(is.single.integer(patience) & 0 < patience)
+  stopifnot(
+    is.single.numeric(conv_ratio_thresh) &
+      0 < conv_ratio_thresh &
+      conv_ratio_thresh < 1
+  )
+  control <- as.list(environment())
+  return(control)
+}
+
+
 .test_reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
@@ -31,19 +44,10 @@ MIXEDML_CLASS <- "MixedML_Model"
   stopifnot(
     is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
   )
+  .check_controls_with_function(mixedml_controls, mixedml_ctrls)
   .check_sorted_data(data, subject, time)
 }
 
-.prepare_mixedml_controls <- function(mixedml_control) {
-  return(.check_control(
-    mixedml_control,
-    mandatory_names_checks = list(
-      patience = function(x) is.single.integer(x) & 0 < x,
-      conv_ratio_thresh = function(x) is.single.numeric(x) & 0 < x & x < 1
-    ),
-    avoid_names = c()
-  ))
-}
 
 # recipe: HLME/Reservoir ----
 
@@ -54,8 +58,8 @@ reservoir_mixedml <- function(
   data,
   subject,
   time,
-  mixedml_controls,
-  hlme_controls,
+  mixedml_controls = mixedml_ctrls(),
+  hlme_controls = hlme_ctrls(),
   esn_controls,
   ensemble_controls,
   fit_controls,
@@ -75,7 +79,6 @@ reservoir_mixedml <- function(
     fit_controls,
     predict_controls
   )
-  mixedml_controls <- .prepare_mixedml_controls(mixedml_controls)
   #
   random_model <- .initiate_random_hlme(
     random_spec,

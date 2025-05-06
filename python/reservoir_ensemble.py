@@ -111,9 +111,9 @@ class ReservoirEnsemble:
         )
         self._fix_copy_names()
 
-    def predict(self, X: Data, run_controls={}) -> list[Data]:
+    def predict(self, X: Data, predict_controls={}) -> list[Data]:
         model_preds = self._pool(
-            delayed(_predict_single)(m, X, run_controls)
+            delayed(_predict_single)(m, X, predict_controls)
             for m in self.model_list
         )
 
@@ -138,5 +138,3 @@ class ReservoirEnsemble:
         assert all(ap.shape == mp.shape for ap, mp in zip(agg_pred, mod1_pred))
 
         return agg_pred
-
-    run = predict
