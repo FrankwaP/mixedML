@@ -64,12 +64,10 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
 #'
 #' Generate and fit a MixedML model using an Ensemble of Echo State Networks (Reservoir+Ridge Regression)
 #' to fit the fixed effects.
-#' @param fixed_spec two-sided linear formula object for the fixed-effects in the linear mixed model.
+#' @param fixed_spec two-sided linear formula object for the fixed-effects.
 #' The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.
-#' By default, an intercept is included.
-#' If no intercept, -1 should be the first term included on the right of ~.
-#' @param random_spec optional one-sided formula for the random-effects in the linear mixed model.
-#' Covariates with a random-effect are separated by +.
+#' @param random_spec two-sided formula for the random-effects in the linear mixed model.
+#'  The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.
 #'  By default, an intercept is included. If no intercept, -1 should be the first term included.
 #' @param data dataframe containing the variables named in `fixed_spec`, `random_spec`, `subject` and `time`.
 #' @param subject name of the covariate representing the grouping structure, given as a string/character.
@@ -86,7 +84,6 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
 reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
-  cor,
   data,
   subject,
   time,
