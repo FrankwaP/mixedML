@@ -5,17 +5,31 @@ PRED_RAND <- "__PRED_RAND"
 
 #' Prepare the hlme_controls
 #'
-#' Please see the parameters use in the [documentation](https://cecileproust-lima.github.io/lcmm/reference/hlme.html)
+#' Please see the [documentation](https://cecileproust-lima.github.io/lcmm/reference/hlme.html)
 #' of the `hlme` function of the `lcmm` package.
 #' @return hlme_controls
+#' @param cor brownian motion or autoregressive process modeling the correlation
+#' between the observations. "BM" or "AR" should be specified, followed by the time variable between brackets.
+#' @param idiag logical for the structure of the variance-covariance matrix of the random-effects.
+#' If FALSE, a non structured matrix of variance-covariance is considered (by default).
+#' If TRUE a diagonal matrix of variance-covariance is considered.
+#' @param maxiter maximum number of iterations for the Marquardt iterative algorithm.
+#' @param nproc the number cores for parallel computation. Default to 1 (sequential mode).
 #' @export
-hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
+hlme_ctrls <- function(
+  cor = NULL,
+  idiag = FALSE,
+  maxiter = 500,
+  nproc = 1
+) {
+  stopifnot(
+    is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
+  )
   return(as.list(environment()))
 }
 
 .initiate_random_hlme <- function(
   random_spec,
-  cor,
   data,
   subject,
   var.time,
@@ -28,7 +42,6 @@ hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
   right <- .get_right_side_string(random_spec)
   hlme_controls$fixed <- stats::as.formula(paste0(left, "~1"))
   hlme_controls$random <- stats::as.formula(paste0("~", right))
-  hlme_controls$cor <- cor
   hlme_controls$data <- data
   hlme_controls$subject <- subject
   hlme_controls$var.time <- var.time

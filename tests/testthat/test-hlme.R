@@ -3,7 +3,6 @@ test_that("hlme_full_use", {
   ##########
   model <- .initiate_random_hlme(
     random_spec = Y ~ X1 + X2 + X3,
-    cor = NULL,
     data = data,
     subject = "ID",
     var.time = "Time",

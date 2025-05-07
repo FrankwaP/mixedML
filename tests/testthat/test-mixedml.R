@@ -14,7 +14,6 @@ test_that("mixedml works", {
     data = data,
     subject = subject,
     time = time,
-    cor = NULL,
     mixedml_ctrls(conv_ratio_thresh = 0.01, patience = 1),
     hlme_controls = hlme_ctrls(maxiter = 50),
     esn_controls = esn_ctrls(

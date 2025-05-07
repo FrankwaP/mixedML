@@ -27,7 +27,6 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
 .test_reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
-  cor,
   data,
   subject,
   time,
@@ -48,9 +47,6 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   stopifnot(subject %in% names(data))
   stopifnot(is.character(time))
   stopifnot(time %in% names(data))
-  stopifnot(
-    is.null(cor) | (rlang::is_bare_formula(cor) & (cor[0:2] %in% c("AR", "BM")))
-  )
   .check_controls_with_function(mixedml_controls, mixedml_ctrls)
   .check_sorted_data(data, subject, time)
 }
@@ -75,7 +71,6 @@ reservoir_mixedml <- function(
   .test_reservoir_mixedml(
     fixed_spec,
     random_spec,
-    cor,
     data,
     subject,
     time,
@@ -89,7 +84,6 @@ reservoir_mixedml <- function(
   #
   random_model <- .initiate_random_hlme(
     random_spec,
-    cor,
     data,
     subject,
     time,
