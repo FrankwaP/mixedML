@@ -4,12 +4,24 @@
 \alias{hlme_ctrls}
 \title{Prepare the hlme_controls}
 \usage{
-hlme_ctrls(idiag = FALSE, maxiter = 500, nproc = 1)
+hlme_ctrls(cor = NULL, idiag = FALSE, maxiter = 500, nproc = 1)
+}
+\arguments{
+\item{cor}{brownian motion or autoregressive process modeling the correlation
+between the observations. "BM" or "AR" should be specified, followed by the time variable between brackets.}
+
+\item{idiag}{logical for the structure of the variance-covariance matrix of the random-effects.
+If FALSE, a non structured matrix of variance-covariance is considered (by default).
+If TRUE a diagonal matrix of variance-covariance is considered.}
+
+\item{maxiter}{maximum number of iterations for the Marquardt iterative algorithm.}
+
+\item{nproc}{the number cores for parallel computation. Default to 1 (sequential mode).}
 }
 \value{
 hlme_controls
 }
 \description{
-Please see the parameters use in the \href{https://cecileproust-lima.github.io/lcmm/reference/hlme.html}{documentation}
+Please see the \href{https://cecileproust-lima.github.io/lcmm/reference/hlme.html}{documentation}
 of the \code{hlme} function of the \code{lcmm} package.
 }

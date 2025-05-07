@@ -24,6 +24,7 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   return(control)
 }
 
+
 .test_reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
@@ -48,12 +49,40 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   stopifnot(is.character(time))
   stopifnot(time %in% names(data))
   .check_controls_with_function(mixedml_controls, mixedml_ctrls)
+  .check_controls_with_function(hlme_controls, hlme_ctrls)
+  .check_controls_with_function(esn_controls, esn_ctrls)
+  .check_controls_with_function(ensemble_controls, ensemble_ctrls)
+  .check_controls_with_function(fit_controls, fit_ctrls)
+  .check_controls_with_function(predict_controls, predict_ctrls)
   .check_sorted_data(data, subject, time)
 }
 
 
 # recipe: HLME/Reservoir ----
 
+#' MixedML model with Reservoir Computing
+#'
+#' Generate and fit a MixedML model using an Ensemble of Echo State Networks (Reservoir+Ridge Regression)
+#' to fit the fixed effects.
+#' @param fixed_spec two-sided linear formula object for the fixed-effects in the linear mixed model.
+#' The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.
+#' By default, an intercept is included.
+#' If no intercept, -1 should be the first term included on the right of ~.
+#' @param random_spec optional one-sided formula for the random-effects in the linear mixed model.
+#' Covariates with a random-effect are separated by +.
+#'  By default, an intercept is included. If no intercept, -1 should be the first term included.
+#' @param data dataframe containing the variables named in `fixed_spec`, `random_spec`, `subject` and `time`.
+#' @param subject name of the covariate representing the grouping structure, given as a string/character.
+#' @param time name of the time variable, given as a string/character.
+#' @param mixedml_controls controls specific to the MixedML model
+#' @param hlme_controls controls specific to the HLME model
+#' @param mixedml_controls controls specific to the MixedML model
+#' @param esn_controls controls specific to the ESN models
+#' @param ensemble_controls controls specific to the Ensemble model
+#' @param fit_controls controls specific to the ESN models fit
+#' @param predict_controls controls specific to the ESN models prediction
+#' @return fitted MixedML model
+#' @export
 reservoir_mixedml <- function(
   fixed_spec,
   random_spec,
@@ -63,10 +92,10 @@ reservoir_mixedml <- function(
   time,
   mixedml_controls = mixedml_ctrls(),
   hlme_controls = hlme_ctrls(),
-  esn_controls,
-  ensemble_controls,
-  fit_controls,
-  predict_controls
+  esn_controls = esn_controls(),
+  ensemble_controls = ensemble_controls(),
+  fit_controls = fit_controls(),
+  predict_controls = predict_controls()
 ) {
   .test_reservoir_mixedml(
     fixed_spec,

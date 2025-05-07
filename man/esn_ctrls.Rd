@@ -9,7 +9,7 @@ esn_ctrls(units = 100, lr = 1, sr = 0.1, ridge = 0, feedback = FALSE)
 \arguments{
 \item{units}{Number of reservoir units.}
 
-\item{lr}{Neurons leak rate. Must be in \link{0,1}.}
+\item{lr}{Neurons leak rate. Must be in \eqn{[0,1]}.}
 
 \item{sr}{Spectral radius of recurrent weight matrix.}
 
