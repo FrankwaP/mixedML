@@ -1,4 +1,7 @@
 **/__pycache__/
+.Rbuildignore
+.spyproject/
+
 
 # History files
 .Rhistory
