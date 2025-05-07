@@ -91,16 +91,10 @@ is.named.vector <- function(x) {
   return(value)
 }
 
-.fix_integers_in_controls <- function(controls) {
-  for (n in names(controls)) {
-    controls[[n]] <- .fix_integer(controls[[n]])
-  }
-  return(controls)
-}
 
 .check_controls_with_function <- function(controls, controls_function) {
   names_controls <- names(controls)
-  params_function <- formalArgs(controls_function)
+  params_function <- methods::formalArgs(controls_function)
   if (!setequal(names_controls, params_function)) {
     control_name <- as.character(as.list(match.call())[['controls']])
     function_name <- as.character(as.list(match.call())[['controls_function']])
@@ -112,58 +106,6 @@ is.named.vector <- function(x) {
   }
 }
 
-
-.check_control <- function(
-  controls,
-  mandatory_names_checks = NULL,
-  avoid_names = NULL,
-  convert_integer = TRUE
-) {
-  control_name <- as.character(as.list(match.call())[['controls']])
-  #
-  stopifnot(is.named.vector(controls))
-  stopifnot(is.named.vector(mandatory_names_checks))
-  stopifnot(all(sapply(mandatory_names_checks, is.function)))
-  stopifnot(is.null(avoid_names) | is.vector(avoid_names))
-  stopifnot(is.logical(convert_integer))
-  #
-  if (convert_integer) {
-    controls <- .fix_integers_in_controls(controls)
-  }
-  #
-  inter_mand <- intersect(names(mandatory_names_checks), names(controls))
-  if (!setequal(inter_mand, names(mandatory_names_checks))) {
-    stop(sprintf(
-      '\"%s\" parameters of \"%s\" is missing',
-      inter_mand,
-      control_name
-    ))
-  }
-  #
-  inter_avoid <- intersect(avoid_names, names(controls))
-  if (length(inter_avoid) > 0) {
-    warning(sprintf(
-      "'\"%s\" parameter of \"%s\" will be ignored",
-      inter_avoid,
-      control_name
-    ))
-    controls[inter_avoid] <- NULL
-  }
-  #
-  for (i in 1:length(mandatory_names_checks)) {
-    name <- names(mandatory_names_checks)[[i]]
-    check <- mandatory_names_checks[[i]]
-    if (!check(controls[[name]])) {
-      stop(sprintf(
-        '\"%s\" parameter of \"%s\" does not respect this condiction: %s',
-        name,
-        control_name,
-        deparse(check)
-      ))
-    }
-  }
-  return(controls)
-}
 
 # reticulate ----
 .activate_environment <- function() {

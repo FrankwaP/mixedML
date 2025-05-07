@@ -4,6 +4,14 @@
 
 MIXEDML_CLASS <- "MixedML_Model"
 
+#' Prepare the mixedml_controls
+#'
+#'
+#' @param patience Number of iterations without improvement before the training is stopped. Default: 2
+#' @param conv_ratio_thresh Ratio of improvement of the MSE to consider an improvement.
+#' `conv_ratio_thresh=0.01` means an improvement of at least 1% of the MSE is necessary. Default: 0.01
+#' @return mixedml_controls
+#' @export
 mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   patience <- .fix_integer(patience)
   stopifnot(is.single.integer(patience) & 0 < patience)
@@ -15,7 +23,6 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   control <- as.list(environment())
   return(control)
 }
-
 
 .test_reservoir_mixedml <- function(
   fixed_spec,
@@ -106,12 +113,12 @@ reservoir_mixedml <- function(
   mse_min <- Inf
   while (TRUE) {
     cat(sprintf("step#%d\n", istep))
-    cat("\tfixed effects…\n")
+    cat("\tfitting fixed effects...\n")
     fixed_results <- .fit_reservoir(fixed_model, data, pred_rand)
     fixed_model <- fixed_results$model
     pred_fixed <- fixed_results$pred_fixed
     #
-    cat("\tmixed effects…\n")
+    cat("\tfitting random effects...\n")
     random_results <- .fit_random_hlme(random_model, data, pred_fixed)
     random_model <- random_results$model
     pred_rand <- random_results$pred_rand
@@ -157,6 +164,15 @@ reservoir_mixedml <- function(
   stopifnot(names(data) == names(model$random_model$data))
 }
 
+
+#' Predict using a fitted model and new data
+#'
+#'
+#'
+#' @param model Trained MixedML model
+#' @param data New data (same format as the one used for training)
+#' @return prediction
+#' @export
 predict <- function(model, data) {
   .test_predict(model, data)
   #
@@ -169,7 +185,14 @@ predict <- function(model, data) {
   return(pred_fixed + pred_mixed)
 }
 
-# summary
+#' Plot the (MSE) convergence of the MixedML training
+#'
+#'
+#'
+#' @param model Trained MixedML model
+#' @param ylog Plot the y-value with a log scale. Defalut: TRUE.
+#' @return Convergence plot
+#' @export
 plot_conv <- function(model, ylog = TRUE) {
   plot(
     1:length(model$mse_list),

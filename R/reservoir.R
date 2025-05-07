@@ -1,20 +1,34 @@
 # reticulate ----
 .load_package <- function() {
   .activate_environment()
-  pypath <- sprintf('%s/%s', here::here(), '/python/')
-  stopifnot(dir.exists(pypath))
+  package <- 'mixedML' # pkgload::pkg_name() does not work with devtools::check
+  pyfolder <- 'python'
   module <- 'reservoir_ensemble'
+  pypath <- system.file(pyfolder, package = package, mustWork = TRUE)
   stopifnot(file.exists(sprintf('%s/%s.py', pypath, module)))
   retipy <- reticulate::import_from_path(module, pypath, convert = TRUE)
   return(retipy)
 }
 
 
-# parameters check/modification ----
+# controls ----
+
+#' Prepare the esn_controls
+#'
+#' Please see the documentation of ReservoirPy for:
+#' - [Reservoir](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.Reservoir.html)
+#' - [Ridge Regression](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.Ridge.html)
+#' @param units Number of reservoir units.
+#' @param lr Neurons leak rate. Must be in \eqn{[0,1]}.
+#' @param sr Spectral radius of recurrent weight matrix.
+#' @param ridge Regularization parameter \eqn{\lambda}.
+#' @param feedback Is readout connected to reservoir through feedback?
+#' @return esn_controls
+#' @export
 esn_ctrls <- function(
-  units = NULL,
+  units = 100,
   lr = 1.0,
-  sr = NULL,
+  sr = 0.1,
   ridge = 0.0,
   feedback = FALSE
 ) {
@@ -27,6 +41,15 @@ esn_ctrls <- function(
   return(as.list(environment()))
 }
 
+#' Prepare the ensemble_controls
+#'
+#'
+#' @param seed_list List of seeds used to generate the Reservoir. Default:  c(1, 2, 3)
+#' @param agg_func Function used to aggregate the predictions of each ESN.
+#' "mean" or "median". Default: "median"
+#' @param n_procs Number of processor to use. 1 means no multiprocessing. Default: 1.
+#' @return ensemble_controls
+#' @export
 ensemble_ctrls <- function(
   seed_list = c(1, 2, 3),
   agg_func = 'median',
@@ -40,6 +63,18 @@ ensemble_ctrls <- function(
   return(as.list(environment()))
 }
 
+
+#' Prepare the fit_controls
+#'
+#' Please see the
+#' [documentation](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.fit)
+#' of ReservoirPy
+#' @param warmup Number of timesteps to consider as warmup and discard at the beginning. Defalut: 0
+#' of each timeseries before training.
+#' @param stateful If True, Node state will be updated by this operation. Default: TRUE
+#' @param reset If True, Nodes states will be reset to zero before this operation. Default: FALSE
+#' @return fit_controls
+#' @export
 fit_ctrls <- function(warmup = 0, stateful = TRUE, reset = FALSE) {
   warmup <- .fix_integer(warmup)
   stopifnot(is.single.integer(warmup))
@@ -48,6 +83,16 @@ fit_ctrls <- function(warmup = 0, stateful = TRUE, reset = FALSE) {
   return(as.list(environment()))
 }
 
+
+#' Prepare the predict_controls
+#'
+#' Please see the
+#' [documentation](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.run)
+#' of ReservoirPy
+#' @param stateful If True, Node state will be updated by this operation.
+#' @param reset If True, Nodes states will be reset to zero before this operation.
+#' @return predict_controls
+#' @export
 predict_ctrls <- function(stateful = TRUE, reset = FALSE) {
   stopifnot(is.logical(stateful))
   stopifnot(is.logical(reset))

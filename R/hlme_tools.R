@@ -2,6 +2,13 @@ PRED_FIXED <- "__PRED_FIXED"
 PRED_RAND <- "__PRED_RAND"
 
 # initialization ----
+
+#' Prepare the hlme_controls
+#'
+#' Please see the parameters use in the [documentation](https://cecileproust-lima.github.io/lcmm/reference/hlme.html)
+#' of the `hlme` function of the `lcmm` package.
+#' @return hlme_controls
+#' @export
 hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
   return(as.list(environment()))
 }
@@ -19,8 +26,8 @@ hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
   # preparing the hlme formula inputs
   left <- .get_left_side_string(random_spec)
   right <- .get_right_side_string(random_spec)
-  hlme_controls$fixed <- as.formula(paste0(left, "~1"))
-  hlme_controls$random <- as.formula(paste0("~", right))
+  hlme_controls$fixed <- stats::as.formula(paste0(left, "~1"))
+  hlme_controls$random <- stats::as.formula(paste0("~", right))
   hlme_controls$cor <- cor
   hlme_controls$data <- data
   hlme_controls$subject <- subject
@@ -53,7 +60,7 @@ hlme_ctrls <- function(idiag = FALSE, maxiter = 500, nproc = 1) {
   # so that is the method used so far
   left <- .get_left_side_string(random_hlme$call$fixed)
   data[left] <- data[left] - pred_fixed
-  random_hlme <- update(random_hlme, data = data, B = random_hlme$best)
+  random_hlme <- stats::update(random_hlme, data = data, B = random_hlme$best)
   stopifnot(random_hlme$best["intercept"] == 0.)
   return(list(
     "model" = random_hlme,
