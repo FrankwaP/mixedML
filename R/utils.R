@@ -152,7 +152,7 @@ is.named.vector <- function(x) {
 
 # reticulate ----
 .activate_environment <- function() {
-  name <- "MIXED_ML_END"
+  name <- "MIXED_ML_PYTHON_ENV"
   value <- Sys.getenv(name)
 
   err <- function() {
