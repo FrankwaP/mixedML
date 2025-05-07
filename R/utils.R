@@ -22,6 +22,7 @@
 # array reshaping ----
 
 .reshape_for_rnn <- function(spec, data, subject) {
+  # https://reservoirpy.readthedocs.io/en/latest/user_guide/quickstart.html#A-note-on-data-formats
   stopifnot(rlang::is_bare_formula(spec))
   stopifnot(is.data.frame(data))
   stopifnot(is.character(subject))
@@ -126,10 +127,10 @@ is.named.vector <- function(x) {
   envname <- splt[[1]][[2]]
   if (envtype == "venv" & reticulate::virtualenv_exists(envname)) {
     reticulate::use_virtualenv(envname)
-    print(sprintf("virtual environment \"%s\" activated!", envname))
+    cat(sprintf("virtual environment \"%s\" activated!\n", envname))
   } else if (envtype == "conda" & reticulate::condaenv_exists(envname)) {
     reticulate::use_condaenv(envname)
-    print(sprintf("conda environment \"%s\" activated!", envname))
+    cat(sprintf("conda environment \"%s\" activated!\n", envname))
   } else {
     err()
   }
