@@ -115,8 +115,6 @@ predict_ctrls <- function(stateful = TRUE, reset = FALSE) {
   .check_controls_with_function(fit_controls, fit_ctrls)
   .check_controls_with_function(predict_controls, predict_ctrls)
 
-  stopifnot(is.named.vector(fit_controls))
-  stopifnot(is.named.vector(predict_controls))
   controls <- c(list(esn_controls = esn_controls), ensemble_controls)
   model <- do.call(retipy$get_esn_ensemble, controls)
   # Adding the remaining attributes to the model so we can use them for fit and predict
