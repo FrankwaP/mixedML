@@ -1,5 +1,5 @@
 ---
-title: "my-vignette"
+title: "Presentation of the mixedML package"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{my-vignette}
@@ -14,6 +14,164 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(mixedML)
+```{r, include = FALSE}
+devtools::load_all('.')
+# library(mixedML)
 ```
+
+```{r, include=FALSE}
+print_help <- function(function_name) {
+  stopifnot(is.character(function_name))
+  hpath <- as.character(help(function_name))[[3]]
+  tc <- textConnection("s", "w", local = TRUE)
+  tools::Rd2HTML(hpath, out = tc)
+  knitr::asis_output(htmltools::htmlPreserve(s))
+}
+```
+
+
+
+# Introduction
+
+This package provides functions to train hybrid mixed effects models. These models combine:  
+- a Machine Leaning (ML) model to estimates the fixed effects;
+- a Mixed Effects model (from [lcmm](https://github.com/CecileProust-Lima/lcmm/)) to estimate the random effects.
+
+Using ML models allows to use highly non-linear modelization of the fixed effects, as well as complex time interactions when using Recurrent Neural Networks.
+
+The method used is model agnostic, so any kind of ML model can be implement.  
+
+So far, a hybrid model based on Reservoir Computing is available. They are implemented by interfacing the [reservoirpy](https://github.com/reservoirpy/reservoirpy) Python package with R using [reticulate](https://github.com/rstudio/reticulate).
+
+
+# MixedML use
+
+## General principle 
+
+The MixedML models are obtained using specific functions which have for signature:
+
+
+```{r, eval=FALSE}
+some_mixed_ml_model(
+  # parameters of the MixedML model (inpired by the hlme function definition)
+  fixed_spec,
+  random_spec,
+  data,
+  subject,
+  time,
+  # parameters for MixedML method
+  mixedml_controls,
+  # controls (extra-parameters) for the hlme model 
+  hlme_controls,
+  # controls (extra-parameters) for the ML model
+  controls_1, controls_2, …
+)
+```
+
+The `fixed_spec`, `random_spec`, `cor`, `data`, `subject` and `time` parameters are taken from the `hlme` function and can be seen in [the lcmm package documentation](https://cecileproust-lima.github.io/lcmm/reference/hlme.html)
+
+## Controls
+
+Controls are defined using specific functions, whose names correspond to the control names: the `some_name_ctrls` function is used to define `some_name_controls` controls.
+
+`mixedml_controls` and `hlme_controls` are common to all MixedML models.
+
+### `mixedml_controls`
+
+```{r, echo=FALSE}
+print_help("mixedml_ctrls")
+```
+
+### `hlme_controls`
+
+```{r, echo=FALSE}
+print_help("hlme_ctrls")
+```
+
+
+## Functions
+
+The function `predict` and `plot_conv` are common to all the MixedML models
+
+### `predict`
+
+```{r, echo=FALSE}
+print_help("predict")
+```
+
+### `plot_conv`
+
+```{r, echo=FALSE}
+print_help("plot_conv")
+```
+
+
+# MixedML with Reservoir Computing
+
+The function `reservoir_mixedml` is used to define and fit a MixedML model which uses an Reservoir Computing to fit the fixed effect.
+
+```{r, echo=FALSE}
+print_help("reservoir_mixedml")
+```
+
+
+Reservoir Computing is implemented using an ensemble of Echo State Network (Reservoir + Ridge readout), whose Reservoirs are initialized with different random seeds. The prediction of the ensemble model is calculated as the mean or median of all the ENS prediction, which reduces the impact of the Reservoir initialization on the results.  
+
+Four controls are used to define the RC model's behavior.
+
+## `esn_controls`
+
+```{r, echo=FALSE}
+print_help('esn_ctrls')
+```
+
+## `ensemble_controls`
+
+```{r, echo=FALSE}
+print_help('ensemble_ctrls')
+```
+
+
+## `fit_controls`
+
+```{r, echo=FALSE}
+print_help('fit_ctrls')
+```
+
+
+## `predict_controls`
+
+```{r, echo=FALSE}
+print_help('predict_ctrls')
+```
+
+
+## Example
+
+
+```{r}
+model <- reservoir_mixedml(
+  fixed_spec = y_mixed ~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8,
+  random_spec = y_mixed ~ x1 + x2 + x3 + x8,
+  data = data_mixedml,
+  subject = "subject",
+  time = "time",
+  mixedml_controls = mixedml_ctrls(),
+  hlme_controls = hlme_ctrls(nproc = 10, maxiter = 5000),
+  esn_controls = esn_ctrls(units = 5, ridge = 1e-5),
+  ensemble_controls = ensemble_ctrls(seed_list = c(1, 2, 3, 4, 5), n_procs = 5),
+  fit_controls = fit_ctrls(),
+  predict_controls = predict_ctrls()
+)
+```
+
+```{r}
+print(model$random_model)
+```
+
+
+```{r}
+plot_conv(model)
+```
+
+
