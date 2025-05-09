@@ -1,11 +1,11 @@
 # reticulate ----
 .load_package <- function() {
   .activate_environment()
-  package <- 'mixedML' # pkgload::pkg_name() does not work with devtools::check
-  pyfolder <- 'python'
-  module <- 'reservoir_ensemble'
+  package <- "mixedML" # pkgload::pkg_name() does not work with devtools::check
+  pyfolder <- "python"
+  module <- "reservoir_ensemble"
   pypath <- system.file(pyfolder, package = package, mustWork = TRUE)
-  stopifnot(file.exists(sprintf('%s/%s.py', pypath, module)))
+  stopifnot(file.exists(sprintf("%s/%s.py", pypath, module)))
   retipy <- reticulate::import_from_path(module, pypath, convert = TRUE)
   return(retipy)
 }
@@ -52,7 +52,7 @@ esn_ctrls <- function(
 #' @export
 ensemble_ctrls <- function(
   seed_list = c(1, 2, 3),
-  agg_func = 'median',
+  agg_func = "median",
   n_procs = 1
 ) {
   seed_list <- .fix_integer(seed_list)
@@ -67,8 +67,9 @@ ensemble_ctrls <- function(
 #' Prepare the fit_controls
 #'
 #' Please see the
-#' [documentation](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.fit)
+#' [documentation][1]
 #' of ReservoirPy
+#' [1] https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.fit
 #' @param warmup Number of timesteps to consider as warmup and discard at the beginning. Defalut: 0
 #' of each timeseries before training.
 #' @param stateful If True, Node state will be updated by this operation. Default: TRUE
@@ -86,9 +87,8 @@ fit_ctrls <- function(warmup = 0, stateful = TRUE, reset = FALSE) {
 
 #' Prepare the predict_controls
 #'
-#' Please see the
-#' [documentation](https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.run)
-#' of ReservoirPy
+#' Please see the [documentation][1] of ReservoirPy
+#' [1] https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.run
 #' @param stateful If True, Node state will be updated by this operation.
 #' @param reset If True, Nodes states will be reset to zero before this operation.
 #' @return predict_controls
@@ -160,7 +160,7 @@ predict_ctrls <- function(stateful = TRUE, reset = FALSE) {
     data_reshaped <- .reshape_for_rnn(fixed_spec, data, subject)
   } else {
     # shortcut to avoid redoing this operation if already done in "fit"
-    stopifnot(setequal(names(data_reshaped), c('X', 'y')))
+    stopifnot(setequal(names(data_reshaped), c("X", "y")))
   }
   #
   controls <- c(

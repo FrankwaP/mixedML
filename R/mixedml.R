@@ -55,6 +55,7 @@ mixedml_ctrls <- function(patience = 2, conv_ratio_thresh = 0.01) {
   .check_controls_with_function(fit_controls, fit_ctrls)
   .check_controls_with_function(predict_controls, predict_ctrls)
   .check_sorted_data(data, subject, time)
+  return()
 }
 
 
@@ -182,6 +183,7 @@ reservoir_mixedml <- function(
 .test_predict <- function(model, data) {
   stopifnot(inherits(model, MIXEDML_CLASS))
   stopifnot(names(data) == names(model$random_model$data))
+  return()
 }
 
 
@@ -210,16 +212,16 @@ predict <- function(model, data) {
 #'
 #'
 #' @param model Trained MixedML model
-#' @param ylog Plot the y-value with a log scale. Defalut: TRUE.
+#' @param ylog Plot the y-value with a log scale. Default: TRUE.
 #' @return Convergence plot
 #' @export
 plot_conv <- function(model, ylog = TRUE) {
-  plot(
-    1:length(model$mse_list),
+  return(plot(
+    seq_along(model$mse_list),
     model$mse_list,
     type = "o",
     xlab = model$time,
     ylab = "MSE",
     ylog = ylog
-  )
+  ))
 }

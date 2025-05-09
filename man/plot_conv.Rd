@@ -9,7 +9,7 @@ plot_conv(model, ylog = TRUE)
 \arguments{
 \item{model}{Trained MixedML model}
 
-\item{ylog}{Plot the y-value with a log scale. Defalut: TRUE.}
+\item{ylog}{Plot the y-value with a log scale. Default: TRUE.}
 }
 \value{
 Convergence plot

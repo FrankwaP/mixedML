@@ -19,6 +19,7 @@ fit_controls
 }
 \description{
 Please see the
-\href{https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.fit}{documentation}
+\link[=1]{documentation}
 of ReservoirPy
+\link{1} https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.fit
 }

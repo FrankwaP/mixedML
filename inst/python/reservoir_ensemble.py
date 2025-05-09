@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from typing import Literal, Optional, Any, Union
+import logging as log
 
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count  # type: ignore
 from numpy import mean, median, ndarray
 from reservoirpy import Model, Node  # type: ignore
-from reservoirpy.nodes import ESN
-from reservoirpy import verbosity
-from reservoirpy.type import Data
+from reservoirpy.nodes import ESN  # type: ignore
+from reservoirpy import verbosity  # type: ignore
+from reservoirpy.type import Data  # type: ignore
 
 verbosity(0)
 
@@ -26,23 +27,19 @@ def _fix_copy_name(model: Model):
         _remove_copy_suffix(node)
 
 
-def _predict_single(
-    model: Model, X: Data, predict_controls: dict[str, Any]
-) -> Data:
+def _predict_single(model: Model, X: Data, predict_controls: dict[str, Any]) -> Data:
     _fix_copy_name(model)
     return model.run(X, **predict_controls)
 
 
-def _fit_single(
-    model: Model, X: Data, y: Data, fit_controls: dict[str, Any]
-) -> Model:
+def _fit_single(model: Model, X: Data, y: Data, fit_controls: dict[str, Any]) -> Model:
     _fix_copy_name(model)
     model.fit(X, y, **fit_controls)
     return model
 
 
 def get_esn_ensemble(
-    esn_controls: [str, Any],
+    esn_controls: dict[str, Any],
     seed_list: list[int],
     agg_func: Literal["mean", "median"],
     n_procs: Optional[int] = None,
@@ -70,11 +67,9 @@ class ReservoirEnsemble:
         self.model_list = model_list
         self._model_names = [m.name for m in model_list]
         self._nodes_names = [m.node_names for m in model_list]
-
-        if n_procs:
-            self._nprocs = min(n_procs, len(model_list))
-        else:
-            self._nprocs = len(model_list)
+        self._nprocs = min(n_procs, len(model_list), cpu_count() - 1)
+        if self._nprocs != n_procs:
+            log.info("n_procs has been corrected to %d", self._nprocs)
 
         self.pool_open()
 
@@ -106,15 +101,13 @@ class ReservoirEnsemble:
 
     def fit(self, X: Data, y: Data, fit_controls={}) -> None:
         self.model_list = self._pool(
-            delayed(_fit_single)(m, X, y, fit_controls)
-            for m in self.model_list
+            delayed(_fit_single)(m, X, y, fit_controls) for m in self.model_list
         )
         self._fix_copy_names()
 
     def predict(self, X: Data, predict_controls={}) -> list[Data]:
         model_preds = self._pool(
-            delayed(_predict_single)(m, X, predict_controls)
-            for m in self.model_list
+            delayed(_predict_single)(m, X, predict_controls) for m in self.model_list
         )
 
         test1 = all(isinstance(mpred, list) for mpred in model_preds)
@@ -122,8 +115,7 @@ class ReservoirEnsemble:
         assert test1 or test2
 
         model_preds = [
-            mpred if isinstance(mpred, list) else [mpred]
-            for mpred in model_preds
+            mpred if isinstance(mpred, list) else [mpred] for mpred in model_preds
         ]
         # list(Models) > list(Series) > array(Timesteps x Features)
         mod1_pred = model_preds[0]
@@ -134,7 +126,7 @@ class ReservoirEnsemble:
             for serie in range(N_series)
         ]
 
-        assert len(agg_pred) == N_series
-        assert all(ap.shape == mp.shape for ap, mp in zip(agg_pred, mod1_pred))
+        if len(agg_pred) == 1:
+            agg_pred = agg_pred[0]
 
         return agg_pred

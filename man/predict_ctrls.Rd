@@ -15,7 +15,6 @@ predict_ctrls(stateful = TRUE, reset = FALSE)
 predict_controls
 }
 \description{
-Please see the
-\href{https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.run}{documentation}
-of ReservoirPy
+Please see the \link[=1]{documentation} of ReservoirPy
+\link{1} https://reservoirpy.readthedocs.io/en/latest/api/generated/reservoirpy.nodes.ESN.html#reservoirpy.nodes.ESN.run
 }

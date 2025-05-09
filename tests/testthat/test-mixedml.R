@@ -1,7 +1,7 @@
 fixed_spec <- y_mixed ~ x1 + x2 + x3
 random_spec <- y_mixed ~ x1 + x2
-subject = "subject"
-time = "time"
+subject <- "subject"
+time <- "time"
 
 to_scale <- c("x1", "x2", "x3")
 data <- data_mixedml

@@ -22,7 +22,7 @@ pred_rand <- rnorm(nrow(data))
     ),
     ensemble_controls = ensemble_ctrls(
       seed_list = c(1L, 2L),
-      agg_func = 'median',
+      agg_func = "median",
       n_procs = 2L
     ),
     fit_controls = fit_ctrls(warmup = 2),
@@ -42,7 +42,7 @@ test_that("esn works", {
   expect_named(fit_result, c("model", "pred_fixed"))
   expect_vector(fit_result$pred_fixed)
   pred <- .predict_reservoir(fit_result$model, data, "ID")
-  expect(all(pred == fit_result$pred_fixed), 'predictions should be equal')
+  expect(all(pred == fit_result$pred_fixed), "predictions should be equal")
   #
   model_comp <- .get_test_model()
   fit_result_comp <- .fit_reservoir(
@@ -51,5 +51,5 @@ test_that("esn works", {
     pred_rand
   )
   pred_comp <- .predict_reservoir(fit_result_comp$model, data, "ID")
-  expect(all(pred != pred_comp), 'predictions should differ')
+  expect(all(pred != pred_comp), "predictions should differ")
 })

@@ -7,7 +7,6 @@
 reservoir_mixedml(
   fixed_spec,
   random_spec,
-  cor,
   data,
   subject,
   time,
@@ -20,13 +19,11 @@ reservoir_mixedml(
 )
 }
 \arguments{
-\item{fixed_spec}{two-sided linear formula object for the fixed-effects in the linear mixed model.
-The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.
-By default, an intercept is included.
-If no intercept, -1 should be the first term included on the right of ~.}
+\item{fixed_spec}{two-sided linear formula object for the fixed-effects.
+The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.}
 
-\item{random_spec}{optional one-sided formula for the random-effects in the linear mixed model.
-Covariates with a random-effect are separated by +.
+\item{random_spec}{two-sided formula for the random-effects in the linear mixed model.
+The response outcome is on the left of ~ and the covariates are separated by + on the right of ~.
 By default, an intercept is included. If no intercept, -1 should be the first term included.}
 
 \item{data}{dataframe containing the variables named in \code{fixed_spec}, \code{random_spec}, \code{subject} and \code{time}.}

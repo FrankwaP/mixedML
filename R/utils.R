@@ -35,10 +35,10 @@
   rnn_data <- unname(split(data, data[subject]))
   # matric so reticulate convert is as a numpy array
   X <- lapply(rnn_data, function(df) {
-    as.matrix(df[x_labels])
+    return(as.matrix(df[x_labels]))
   })
   y <- lapply(rnn_data, function(df) {
-    as.matrix(df[y_label])
+    return(as.matrix(df[y_label]))
   })
   return(list(X = X, y = y))
 }
@@ -65,7 +65,7 @@
   stopifnot(time %in% names(data))
   #
   data_order <- order(data[, subject], data[, time])
-  if (!all(data_order == 1:length(data_order))) {
+  if (!all(data_order == seq_along(data_order))) {
     stop("Please sort the data by subject and time beforehand!")
   }
 }
@@ -97,8 +97,8 @@ is.named.vector <- function(x) {
   names_controls <- names(controls)
   params_function <- methods::formalArgs(controls_function)
   if (!setequal(names_controls, params_function)) {
-    control_name <- as.character(as.list(match.call())[['controls']])
-    function_name <- as.character(as.list(match.call())[['controls_function']])
+    control_name <- as.character(as.list(match.call())[["controls"]])
+    function_name <- as.character(as.list(match.call())[["controls_function"]])
     stop(sprintf(
       "\"%s\" should be set with the function \"%s\"\n",
       control_name,
@@ -119,26 +119,28 @@ is.named.vector <- function(x) {
       name
     ))
   }
-  if (!grepl(':', value)) {
+  if (!grepl(":", value)) {
     err()
   }
   splt <- strsplit(value, ":")
   envtype <- splt[[1]][[1]]
   envname <- splt[[1]][[2]]
-  if (envtype == "venv" & reticulate::virtualenv_exists(envname)) {
+  if (envtype == "venv" && reticulate::virtualenv_exists(envname)) {
     reticulate::use_virtualenv(envname)
     cat(sprintf("virtual environment \"%s\" activated!\n", envname))
-  } else if (envtype == "conda" & reticulate::condaenv_exists(envname)) {
+  } else if (envtype == "conda" && reticulate::condaenv_exists(envname)) {
     reticulate::use_condaenv(envname)
     cat(sprintf("conda environment \"%s\" activated!\n", envname))
   } else {
     err()
   }
+  return()
 }
 
 
 .set_r_attr_to_py_obj <- function(py_obj, name, r_value) {
   reticulate::py_set_attr(py_obj, name, reticulate::r_to_py(r_value))
+  return()
 }
 
 

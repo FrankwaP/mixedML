@@ -63,6 +63,7 @@ hlme_ctrls <- function(
   stopifnot(is.data.frame(data))
   stopifnot(is.numeric(pred_fixed))
   stopifnot(is.vector(pred_fixed))
+  return()
 }
 
 .fit_random_hlme <- function(random_hlme, data, pred_fixed) {

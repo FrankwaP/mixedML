@@ -1,50 +1,45 @@
 # -*- coding: utf-8 -*-
-
-from reservoirpy.nodes import Reservoir, Ridge
-from reservoirpy.datasets import mackey_glass
-
-
-from python.reservoir_ensemble import ReservoirEnsemble, get_esn_ensemble
+from numpy import ndarray
+from reservoirpy.nodes import Reservoir, Ridge  # type: ignore
+from reservoirpy.datasets import mackey_glass, japanese_vowels  # type: ignore
 
 
-model1 = Reservoir(units=5) >> Ridge(ridge=1e-5)
-model2 = Reservoir(units=6) >> Ridge(ridge=1e-5)
+from inst.python.reservoir_ensemble import ReservoirEnsemble, get_esn_ensemble
+
 
 data = mackey_glass(2000)
 
-X1 = data[:50]
-y1 = data[1:51]
+Xarr, yarr = data[:50], data[1:51]
+
+Xlst, Ylst, _, _ = japanese_vowels(repeat_targets=True)
 
 
-X2_1 = data[:50]
-X2_2 = data[50:60]
-
-y2_1 = data[1:51]
-y2_2 = data[51:61]
-
-X2 = [X2_1, X2_2]
-y2 = [y2_1, y2_2]
+def pred_same_shape(a, b) -> bool:
+    if isinstance(a, list) and isinstance(b, list):
+        return all(a_.shape == b_.shape for a_, b_ in zip(a, b))
+    elif isinstance(a, ndarray) and isinstance(b, ndarray):
+        return a.shape == b.shape
+    raise UserWarning()
 
 
-def test_no_mp():
-
+def train_fit_reservoir_ensemble(n_procs, X, y):
+    model1 = Reservoir(units=5) >> Ridge(ridge=1e-5)
+    model2 = Reservoir(units=6) >> Ridge(ridge=1e-5)
     resmod = ReservoirEnsemble(
-        model_list=[model1, model2], n_procs=0, agg_func="mean"
+        model_list=[model1, model2], n_procs=n_procs, agg_func="mean"
     )
-
-    resmod.fit(X1, y1)
-    resmod.run(X1)
-
-
-def test_mp():
-    resmod = ReservoirEnsemble(
-        model_list=[model1, model2], n_procs=5, agg_func="median"
-    )
-    resmod.fit(X1, y1)
-    resmod.run(X1)
+    resmod.fit(X, y)
+    ypred = resmod.predict(X)
+    assert pred_same_shape(ypred, y)
 
 
-def test_ens():
+def test_reservoir_ensemble():
+    train_fit_reservoir_ensemble(1, Xarr, yarr)
+    train_fit_reservoir_ensemble(5, Xarr, yarr)
+    train_fit_reservoir_ensemble(10, Xlst, Ylst)
+
+
+def test_get_ens():
 
     resmod = get_esn_ensemble(
         {"units": 5, "ridge": 1e-5},
@@ -52,20 +47,4 @@ def test_ens():
         agg_func="median",
         seed_list=[1, 2, 3],
     )
-    resmod.fit(X1, y1)
-    resmod.run(X1)
-
-
-def test_ens_2():
-
-    resmod = get_esn_ensemble(
-        {"units": 5, "ridge": 1e-5},
-        n_procs=5,
-        agg_func="median",
-        seed_list=[1, 2, 3],
-    )
-    resmod.fit(X2, y2)
-    resmod.run(X2)
-
-
-test_no_mp()
+    assert isinstance(resmod, ReservoirEnsemble)
